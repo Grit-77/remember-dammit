@@ -78,6 +78,13 @@ def build_parser():
     integration.add_argument("harness", choices=["claude", "codex", "cursor", "antigravity"])
     _selection(integration)
     integration.add_argument("--python-executable", default=sys.executable)
+    setup = commands.add_parser("setup", help="Preview or apply workspace MCP configuration and skill")
+    setup.add_argument("harness", choices=["claude", "codex", "cursor", "antigravity"])
+    _selection(setup)
+    setup.add_argument("--workspace", required=True)
+    setup.add_argument("--python-executable", default=sys.executable)
+    setup.add_argument("--advisor", choices=["none", "jev", "laya"], default="none")
+    setup.add_argument("--apply", action="store_true", help="Apply workspace configuration; otherwise preview only")
     return parser
 
 
@@ -105,6 +112,12 @@ def main(argv=None):
             from .storage import Vault
             result = plan_import(args.source, collection=args.collection, scope=args.scope,
                                  vault=Vault(args.vault) if args.vault is not None else None)
+        elif args.command == "setup":
+            from .setup import setup_workspace
+            result = setup_workspace(args.workspace, args.harness, vault_path=args.vault,
+                                     project=args.project, personal=args.personal,
+                                     python_executable=args.python_executable,
+                                     advisor=args.advisor, dry_run=not args.apply)
         elif args.command == "integration":
             from .integrations import render
             result = render(args.harness, vault_path=args.vault, project=args.project, personal=args.personal, python_executable=args.python_executable)
@@ -156,7 +169,10 @@ def main(argv=None):
             return 1
         return 0
     except VaultError as exc:
-        _emit({"error": {"code": exc.code, "message": exc.message}})
+        error = {"code": exc.code, "message": exc.message}
+        if getattr(exc, "evidence", None) is not None:
+            error["evidence"] = exc.evidence
+        _emit({"error": error})
         return 2 if exc.code == "invalid_arguments" else 1
     except ImportError:
         _emit({"error": {"code": "dependency_missing", "message": "Required component unavailable; MCP requires the mcp extra."}})
