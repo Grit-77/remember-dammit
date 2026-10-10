@@ -15,6 +15,8 @@ The vault format does not depend on a model provider. The core makes no model ca
 From this checkout, with Python 3.11+:
 
 ```powershell
+git clone https://github.com/Grit-77/remember-dammit.git
+cd remember-dammit
 python -m venv .venv
 .venv/Scripts/python.exe -m pip install -e ".[mcp]"
 .venv/Scripts/python.exe examples/demo.py --vault .local/demo-vault
@@ -65,6 +67,7 @@ Existing Obsidian-vault adoption, native editor reconciliation, offline multi-ma
 - [Harness contract](docs/HARNESSES.md)
 - [Optional Jev/Laya design](docs/PROVIDERS.md)
 - [Research](docs/RESEARCH.md)
+- [Claim evidence and verification commands](FACTS.md)
 
 Run the development checks:
 

@@ -35,6 +35,6 @@ Independent `session:<id>` records can be written by the owner CLI; project agen
 
 Local execution is on Windows with Python 3.12.14, PyYAML 6.0.3 and MCP SDK 2.3.0. Tests use real temporary vaults, cross-process writers, interrupted commits, and actual stdio SDK clients. A missing Python 3.12-only pathlib method is simulated; it is not a native Python 3.11 run.
 
-CI is configured for Windows, macOS and Linux on Python 3.11/3.12, but has not run remotely. Those platform combinations remain unverified until real results exist. No claim of a passing native Claude Code/Codex/Cursor/Antigravity matrix is made.
+CI is configured for Windows, macOS and Linux on Python 3.11/3.12. Consult the [Actions results](https://github.com/Grit-77/remember-dammit/actions/workflows/test.yml) for the result on a specific commit; a configured matrix alone is not platform verification. No claim of a passing native Claude Code/Codex/Cursor/Antigravity matrix is made.
 
 Run `python -m unittest discover -s tests -v` from the installed checkout to obtain the current result. Failure-injection cases intentionally exercise errors; recorded success must include the command's actual exit status.

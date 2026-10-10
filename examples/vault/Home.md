@@ -1,6 +1,6 @@
 # Your vault
 
-**Illustrative, synthetic content.** This is a human-readable design example, not an initialized engine vault, recorded client run, or validated storage schema. IDs are descriptive fixture IDs; production ID generation and revision manifests still need implementation.
+**Illustrative, synthetic content.** This is a human-readable design example, not an initialized engine vault, recorded client run, or validated storage schema. These descriptive fixture IDs and notes are separate from the implemented engine's generated IDs and committed revision format.
 
 One place for what you know, what you are doing, and what you do not want to explain again.
 

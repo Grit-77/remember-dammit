@@ -6,7 +6,7 @@ Design and official-documentation research, 2026-10-10. The shared CLI/MCP serve
 
 The engine understands vault IDs, project scope, sources, revisions, operations and budgets. It does not require an Anthropic, OpenAI, Google, or other model identifier to store or retrieve knowledge. Model/provider labels may be recorded as provenance without affecting format compatibility.
 
-CLI JSON and MCP expose the same semantic operations: inspect/search, propose/commit, correct, context, history, and reconciliation. MCP is a transport for tools, not a promise that an agent will call them.
+The target contract spans inspect/search, propose/commit, correction, context, history, and reconciliation across CLI JSON and MCP. The current alpha implements remember, recall, show, correct, context, and history; separate proposal admission and editor reconciliation remain planned. MCP is a transport for tools, not a promise that an agent will call them.
 
 Every write supplies an operation ID, actor/session identity, explicit scope, payload, and expected base revision(s). Identity alone grants no write authority. Errors such as conflict, source-changed, scope-denied, recovery-required, and budget-too-small must remain machine-readable.
 
