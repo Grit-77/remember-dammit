@@ -1,6 +1,6 @@
 # Harness contract
 
-Design and official-documentation research, 2026-10-10. **Every implementation row is currently unimplemented and untested.**
+Design and official-documentation research, 2026-10-10. The shared CLI/MCP server, four configuration proposals and an explicit-memory skill are implemented in the source alpha. **Native-client acceptance and automatic hooks remain unimplemented or unverified.** SDK subprocess checks are described in [STATUS.md](STATUS.md).
 
 ## One core, thin adapters
 

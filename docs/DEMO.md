@@ -2,11 +2,13 @@
 
 Design only. No live four-harness recording or compatibility test has been completed.
 
+The provider-free [core demo script](../examples/demo.py) now exercises actual persistence, correction, reopened recall and project isolation. It is separately tested and does not invoke or impersonate any native harness.
+
 ## The story
 
 **One vault grows more useful as you switch tools.**
 
-Use the [illustrative vault](../examples/vault/Home.md) as synthetic content, then turn it into a runnable fixture when the engine exists.
+Use the [illustrative vault](../examples/vault/Home.md) as the broader synthetic storyboard. The core script above implements a smaller real fixture; the four-client sequence below is still a planned acceptance run.
 
 1. In Claude Code, save a scoped preference and a source-backed project decision.
 2. In Cursor, retrieve project context and use the shared preference without receiving unrelated private material.

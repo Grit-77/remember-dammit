@@ -1,6 +1,6 @@
 # Product brief
 
-Updated 2026-10-10. Architecture proposal; no implementation exists.
+Updated 2026-10-10. This describes the full architecture target. A foundation source alpha now exists; [STATUS.md](STATUS.md) distinguishes implemented behavior from the remaining scope.
 
 ## Owner requirements
 

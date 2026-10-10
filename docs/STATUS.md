@@ -1,0 +1,40 @@
+# Source alpha status
+
+Version 0.1.0a1, 2026-10-10. This document separates current implementation from the broader architecture proposals.
+
+## Implemented
+
+The local core initializes a new empty vault, persists immutable Markdown revisions, links records to sources, creates scoped corrections, preserves history, grants/revokes selected personal records, and diagnoses integrity and source-scope problems. A durable head checkpoint detects acknowledged journal-tail truncation, including lost revocations.
+
+Retrieval validates canonical records, applies scope/disclosure/dependency rules, ranks heading/paragraph passages with SQLite FTS5, follows correction terminology, and returns bounded UTF-8 context. Historical-only sources are excluded from default recall so an obsolete instruction does not return through its old evidence. Explicit history remains available. This whole-source rule is conservative; it may exclude other useful passages from a source cited only by obsolete decisions. Passage-level evidence relationships remain future work.
+
+The CLI and optional official-SDK MCP server invoke the same core. Project MCP servers have a fixed scope, cannot grant access, and cannot edit a granted personal record. Scope/source checks traverse dependencies and recheck the observed snapshot before returning. The context budget covers the canonical packet and its model-facing MCP text; protocol envelope overhead and client prompt overhead are outside that budget.
+
+Four client proposal formats and a shared explicit-memory skill are generated read-only. Actual SDK subprocesses exercise the emitted argv for each format and project/personal mode. This is not native client acceptance.
+
+The owner CLI can export a selected scope to a new Markdown snapshot folder, with a linked Home page and optional history. It refuses existing destinations, canonical-vault nesting and link/junction paths, filters inaccessible dependencies and marks interrupted exports incomplete. This is a readable snapshot, not editable-note synchronization; changes to exported files never write back into canonical memory.
+
+## Storage boundaries
+
+- Canonical revision files are under `.remember/revisions/`, with immutable operations and `head.json` as a durable high-water reference. They are human-readable, but not an ordinary freely editable Obsidian workspace yet.
+- The alpha deliberately refuses initialization into a populated unrelated directory. It does not silently import or reorganize an existing vault.
+- Editing a committed revision is reported as an integrity error. The full proposal/reconciliation workflow in VAULT.md is not implemented.
+- Writer locks are in a stable `.remember-dammit-locks` directory beside the canonical vault root. This avoids different harness TEMP environments creating different locks and requires write access to the vault's parent. Locks are not portable memory and must not be synchronized.
+- Tests cover process death around file flush/rename publication boundaries, not every possible power failure or filesystem failure mode. Windows lacks a portable directory-fsync operation here.
+- Coordinated rollback of both the journal and its head checkpoint cannot be detected from those rolled-back files alone. This is integrity checking, not tamper-proof storage against someone controlling all local files.
+- Snapshots are observed points in time. A revocation after the last delivery check cannot retract text already delivered to a client.
+- No migration is provided for earlier private scratch formats from this development session. The initial distributed alpha format requires `head.json`.
+
+## Not implemented
+
+Existing-vault adoption, editable-note reconciliation, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, Jev/Laya connectors, and a visual vault manager.
+
+Independent `session:<id>` records can be written by the owner CLI; project agents can save separate session-kind records in their bound project. MCP cannot select an arbitrary session scope. No automatic session card loading is claimed.
+
+## Verification scope
+
+Local execution is on Windows with Python 3.12.14, PyYAML 6.0.3 and MCP SDK 2.3.0. Tests use real temporary vaults, cross-process writers, interrupted commits, and actual stdio SDK clients. A missing Python 3.12-only pathlib method is simulated; it is not a native Python 3.11 run.
+
+CI is configured for Windows, macOS and Linux on Python 3.11/3.12, but has not run remotely. Those platform combinations remain unverified until real results exist. No claim of a passing native Claude Code/Codex/Cursor/Antigravity matrix is made.
+
+Run `python -m unittest discover -s tests -v` from the installed checkout to obtain the current result. Failure-injection cases intentionally exercise errors; recorded success must include the command's actual exit status.

@@ -2,55 +2,74 @@
 
 **I already told you.**
 
-One vault. Different agents. Your memory.
+Local, source-linked memory shared by your AI agents.
 
-> **Design stage:** no installable release, working adapter, or measured retrieval result exists yet. This repository contains the proposed architecture, an illustrative vault, and acceptance plans.
+> **Source alpha · 0.1.0a1.** A working local engine, CLI and stdio MCP server. Configuration proposals are provided for Claude Code, Codex, Cursor and Antigravity. Their actual native-client acceptance is still pending; no automatic hooks are installed.
 
-You have preferences, projects, sources, decisions, and things you learned the hard way. They should remain useful when you open a new session, change your model, or switch tools.
+A new session should not mean explaining the same decision again. Save what matters, correct it when it changes, and inspect the history behind the current answer.
 
-Remember, Dammit. is being designed as a local, model-independent second-brain vault. **Claude Code, Codex, Google Antigravity, and Cursor are first-class integration targets.** Additional harnesses should connect through the same versioned protocol, without creating another memory store.
+The vault format does not depend on a model provider. The core makes no model calls, needs no API key and starts no background service. Your AI client continues to use its normal subscription or provider.
 
-## A vault you can live in
+## Try the actual engine
 
-- **You:** preferences and working principles you deliberately share with your agents.
-- **Sources:** the notes, documents, and selected conversation excerpts behind a claim.
-- **Knowledge:** linked concepts, people, lessons, and decisions with traceable sources.
-- **Projects:** goals, project-specific context, open questions, and current work.
-- **Sessions:** separate continuation records so parallel agents do not overwrite one shared last-session file.
-- **History:** corrections and unresolved branches that stay inspectable.
+From this checkout, with Python 3.11+:
 
-The layout is a starter, not a mandatory reorganization of your existing Obsidian vault. Open the [illustrative vault](examples/vault/Home.md) to see the intended experience.
+```powershell
+python -m venv .venv
+.venv/Scripts/python.exe -m pip install -e ".[mcp]"
+.venv/Scripts/python.exe examples/demo.py --vault .local/demo-vault
+```
 
-## Remember what matters
+On macOS/Linux, substitute `.venv/bin/python` for `.venv/Scripts/python.exe`. The demo refuses an existing destination. It creates synthetic source notes, corrects SendGrid to Postmark, reopens the real vault, recalls the current decision using the old provider's name, and checks isolation from another project. It calls no AI model and does not simulate native-client acceptance.
 
-The proposed flow is:
+See [installation and client configuration](docs/INSTALL.md) for explicit Windows commands. Nothing is published to PyPI yet; install from this checkout rather than an unrelated package-index name.
 
-**Capture → connect to sources → organize → retrieve relevant context → correct and learn.**
+## What works in this alpha
 
-The engine assembles a small context for the current task instead of injecting the whole vault. It should explain why a memory was included, where it came from, and whether its source needs review. Corrected decisions stay in history without being presented as current instructions.
+- **Readable Markdown with immutable history.** Source-linked notes, decisions, preferences and session records share stable IDs.
+- **Explicit scope.** Personal, shared and project knowledge are distinct. A personal note reaches a project only through a specific grant.
+- **Corrections that preserve history.** Expected revisions prevent silent competing updates; former terminology can find the current decision.
+- **Bounded recall.** Lexical passages, aliases, source citations, evidence labels, conflict bundles and omission notices fit a declared UTF-8 byte budget.
+- **Participating writers coordinate.** Cross-process locking, idempotent operation IDs, atomic commit markers and a committed-head checkpoint protect tested write/retry paths.
+- **Inspectable failures.** Doctor reports changed/missing committed content, orphan payloads and revoked-source dependencies.
+- **Local MCP and CLI.** The server is bound to one project or personal selection. It cannot grant itself wider access.
+- **Configuration proposals.** Generate correctly escaped configuration and shared skill guidance for four harnesses without editing their installed settings.
+- **Browsable snapshots.** Export a selected scope into a new Markdown folder with a Home page, source links and optional history. Exported edits do not update live memory.
 
-An agent can contribute within the user's configured capture policy. The engine does not pretend that every conversation automatically becomes reliable knowledge.
+The optional on-disk SQLite projection is disposable. Current search validates source records and builds its scoped FTS index in memory; large-vault performance has not been benchmarked.
 
-## Harness-independent by design
+## One vault, many clients
 
-One core serves a CLI, structured JSON, and an MCP interface. Thin adapters translate each client's skills, rules, and lifecycle events into that common contract.
+```text
+Claude Code · Codex · Cursor · Antigravity · other MCP/CLI clients
+                              ↓
+                     one shared vault core
+                              ↓
+           Markdown · sources · revisions · explicit scopes
+```
 
-MCP availability is not proof of automatic recall. Explicit read/write workflows and native lifecycle automation will be tested and reported separately for each client and surface. See the [harness contract](docs/HARNESSES.md).
+Generated configurations have been exercised with an SDK stdio client. That establishes a server launch and protocol exchange, not that a particular IDE loaded the server or followed its skill. Explicit save/recall and automatic lifecycle integration are separate capabilities. The native four-client matrix remains open.
 
-## Optional advisors
+## Where this is going
 
-Jev and Laya are planned optional advisor integrations, following the role separation studied in Avenox Beyin. They are **not the vault, the default search engine, or mandatory model providers**.
+A full personal second brain: preferences, inbox, original sources, connected knowledge, projects, independent session cards and reviewable history. Browse the [illustrative vault](examples/vault/Home.md) for the intended organization.
 
-The local core must work with advisors disabled. Advisor results can help assess candidates or source support, but cannot authorize writes or expand access. Provider setup, transmitted content, limits, and fallback behavior must remain explicit. See the [provider contract](docs/PROVIDERS.md).
+Existing Obsidian-vault adoption, native editor reconciliation, offline multi-machine synchronization, semantic embeddings, automatic hooks, and Jev/Laya connectors are **not implemented yet**. The alpha initializes new empty vaults and treats edits to committed revision payloads as integrity errors. Optional advisors will assess bounded candidates; they will not become authoritative writers.
 
-## Read the design
+## Read more
 
-- [Product scope and delivery gates](docs/PRODUCT.md)
-- [Vault architecture and data lifecycle](docs/VAULT.md)
-- [Harnesses and future adapters](docs/HARNESSES.md)
-- [Optional Jev/Laya advisors](docs/PROVIDERS.md)
-- [Multi-harness demo plan](docs/DEMO.md)
-- [Research and source links](docs/RESEARCH.md)
-- [Approved decisions and proposals](docs/DECISIONS.md)
+- [Implemented behavior and current limits](docs/STATUS.md)
+- [Install and configure clients](docs/INSTALL.md)
+- [Product scope](docs/PRODUCT.md)
+- [Vault architecture](docs/VAULT.md)
+- [Harness contract](docs/HARNESSES.md)
+- [Optional Jev/Laya design](docs/PROVIDERS.md)
+- [Research](docs/RESEARCH.md)
 
-Inspired by [Avenox Beyin](https://github.com/avenoxai/avenoxbeyin). No upstream implementation has been copied into this project. No performance, adoption, universal compatibility, or perfect-recall claim is made.
+Run the development checks:
+
+```sh
+python -m unittest discover -s tests -v
+```
+
+Inspired by [Avenox Beyin](https://github.com/avenoxai/avenoxbeyin). No upstream implementation has been copied. [MIT licensed](LICENSE). No perfect-recall, universal compatibility, cost-saving or adoption claim is made.
