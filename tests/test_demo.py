@@ -22,7 +22,8 @@ class DemoTests(unittest.TestCase):
             self.assertNotIn("Use SendGrid", json.dumps(report["context"]))
             self.assertEqual(report["other_project_records"], 0)
             self.assertEqual(report["history_states"], ["superseded", "active"])
-            self.assertTrue((vault / ".remember" / "head.json").exists())
+            self.assertFalse((vault / ".remember" / "head.json").exists())
+            self.assertTrue(list((vault / ".remember" / "acks").glob('*.json')))
 
     def test_demo_refuses_an_existing_directory_without_changing_its_content(self):
         with tempfile.TemporaryDirectory() as directory:

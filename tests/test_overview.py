@@ -40,7 +40,7 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual([r["id"] for r in result["records"]], ["atlas-private", "atlas-public", "shared"])
         self.assertEqual(result["selection"], {"project": "atlas", "personal": False,
                                                "scope": "project:atlas", "audience": "private"})
-        self.assertEqual(result["summary"], {"by_kind": {"note": 2, "task": 1}, "by_state": {"active": 3}})
+        self.assertEqual(result["summary"], {"by_kind": {"note": 2, "task": 1}, "by_state": {"active": 3}, "conflicted_lineages": 0})
         self.assertEqual([r["id"] for r in self.overview(project="atlas", audience="shared")["records"]], ["atlas-public", "shared"])
         self.assertEqual([r["id"] for r in self.overview(project="atlas", audience="public")["records"]], ["atlas-public"])
         self.assertEqual([r["id"] for r in self.overview(personal=True)["records"]], ["personal", "shared"])
@@ -61,7 +61,7 @@ class OverviewTests(unittest.TestCase):
         after = self.overview(project="atlas")
         self.assertEqual([r["id"] for r in after["records"]], ["independent"])
         self.assertEqual(after["omitted"]["source_dependencies"], 2)
-        self.assertEqual(after["summary"], {"by_kind": {"note": 1}, "by_state": {"active": 1}})
+        self.assertEqual(after["summary"], {"by_kind": {"note": 1}, "by_state": {"active": 1}, "conflicted_lineages": 0})
         for forbidden in ("private-source", "derived", "indirect"):
             self.assertNotIn(forbidden, json.dumps(after))
 
@@ -88,7 +88,7 @@ class OverviewTests(unittest.TestCase):
                        scope="project:atlas", kind="task")
         result = self.overview(project="atlas")
         self.assertEqual(result["summary"], {"by_kind": {"review": 1, "task": 1},
-                                            "by_state": {"active": 1, "proposed": 1}})
+                                            "by_state": {"active": 1, "proposed": 1}, "conflicted_lineages": 0})
         review, task = result["records"]
         self.assertEqual((review["state"], review["evidence"]), ("proposed", "agent-inference"))
         self.assertEqual((task["kind"], task["state"]), ("task", "active"))
@@ -102,7 +102,7 @@ class OverviewTests(unittest.TestCase):
         result = self.overview(project="atlas", limit=1)
         self.assertEqual([r["id"] for r in result["records"]], ["a-note"])
         self.assertEqual(result["total_count"], 3)
-        self.assertEqual(result["summary"], {"by_kind": {"note": 2, "source": 1}, "by_state": {"active": 3}})
+        self.assertEqual(result["summary"], {"by_kind": {"note": 2, "source": 1}, "by_state": {"active": 3}, "conflicted_lineages": 0})
         self.assertEqual(result["omitted"], {"limit": 2, "source_dependencies": 0})
         self.assertEqual(result["records"][0]["sources"][0]["id"], "c-source")
 
@@ -188,7 +188,7 @@ class OverviewTests(unittest.TestCase):
         result = self.overview(personal=True)
         self.assertEqual(result["records"], [])
         self.assertEqual(result["total_count"], 0)
-        self.assertEqual(result["summary"], {"by_kind": {}, "by_state": {}})
+        self.assertEqual(result["summary"], {"by_kind": {}, "by_state": {}, "conflicted_lineages": 0})
         self.assertEqual(result["status"], "no_results")
         self.assertEqual(before, {str(p.relative_to(self.vault.root)): p.read_bytes()
                                  for p in self.vault.root.rglob("*") if p.is_file()})

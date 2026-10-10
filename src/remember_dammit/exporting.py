@@ -31,6 +31,8 @@ def _guard(directory, vault_root, identity=None):
             raise VaultError("invalid_destination", "Snapshot paths cannot contain symlinks or junctions.")
         if directory.resolve().is_relative_to(vault_root):
             raise VaultError("invalid_destination", "Snapshots must be outside the canonical vault.")
+        from .local_state import reject_local_state_overlap
+        reject_local_state_overlap(vault_root, directory)
         if identity is not None:
             stat = directory.stat()
             if (stat.st_dev, stat.st_ino) != identity:
@@ -80,18 +82,21 @@ def _note(record, records, filenames, snapshot):
     metadata.update(snapshot=snapshot, snapshot_only=True)
     metadata["sources"] = [source for source in record.get("sources", []) if source in records]
     metadata["source_files"] = {source: Path(filenames[source]).name for source in metadata["sources"]}
-    predecessor = record.get("supersedes")
-    metadata["supersedes"] = predecessor if predecessor in records else None
-    successors = sorted(item["id"] for item in records.values() if item.get("supersedes") == record["id"])
+    parents = record.get("supersedes_all") or ([record["supersedes"]] if record.get("supersedes") else [])
+    predecessors = sorted(identifier for identifier in parents if identifier in records)
+    metadata["supersedes"] = predecessors[0] if len(predecessors) == 1 else None
+    metadata["supersedes_all"] = predecessors
+    successors = sorted(item["id"] for item in records.values()
+                        if record["id"] in (item.get("supersedes_all") or [item.get("supersedes")]))
     metadata["successors"] = successors
     links = ["[Home](../Home.md)"]
     if metadata["sources"]:
         links += ["", "## Sources"]
         links += [f"- [{_markdown_label(records[source]['title'])}]({Path(filenames[source]).name})" for source in metadata["sources"]]
-    if metadata["supersedes"] or successors:
+    if predecessors or successors:
         links += ["", "## History"]
-        if metadata["supersedes"]:
-            links.append(f"- Predecessor: [{_markdown_label(records[predecessor]['title'])}]({Path(filenames[predecessor]).name})")
+        links += [f"- Predecessor: [{_markdown_label(records[predecessor]['title'])}]({Path(filenames[predecessor]).name})"
+                  for predecessor in predecessors]
         links += [f"- Successor: [{_markdown_label(records[successor]['title'])}]({Path(filenames[successor]).name})" for successor in successors]
     return (
         "---\n" + yaml.safe_dump(metadata, allow_unicode=True, sort_keys=False) + "---\n\n"

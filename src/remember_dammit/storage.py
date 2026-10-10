@@ -121,7 +121,13 @@ def _publish(path, data):
 
 def _is_link(path):
     junction_check = getattr(path, 'is_junction', None)
-    return path.is_symlink() or (callable(junction_check) and junction_check())
+    if path.is_symlink() or (callable(junction_check) and junction_check()):
+        return True
+    if os.name == 'nt':
+        # The centralized native guard also covers Python 3.11 junctions.
+        from .local_state import _is_link as native_link_check
+        return native_link_check(path)
+    return False
 
 
 def _root_path(root):
@@ -137,12 +143,30 @@ def _root_path(root):
 class Vault:
     """Open an explicitly initialized vault; all returned data is detached."""
 
+    def __new__(cls, root):
+        if cls is Vault:
+            if (_root_path(root) / '.migration-INCOMPLETE.json').exists():
+                raise VaultError('incomplete_transfer', 'This migration destination is not yet verified.')
+            try:
+                config = json.loads((_root_path(root) / '.remember/vault.json').read_bytes())
+            except (OSError, ValueError, TypeError):
+                config = {}
+            if isinstance(config, dict) and config.get('schema') == 2:
+                from .storage_v2 import CausalVault
+                return object.__new__(CausalVault)
+        return object.__new__(cls)
+
     def __init__(self, root):
         self._root = _root_path(root)
         self._vault_id = self._config()['vault_id']
 
     @classmethod
-    def initialize(cls, root):
+    def initialize(cls, root, *, format_version=2):
+        if type(format_version) is not int or format_version not in (1, 2):
+            raise VaultError('invalid_input', 'format_version must be 1 or 2.')
+        if format_version == 2 and not (_root_path(root) / '.remember').exists():
+            from .storage_v2 import CausalVault
+            return CausalVault.initialize(root)
         path = _root_path(root)
         try:
             with writer_lock(path):
@@ -414,6 +438,14 @@ class Vault:
 
     def snapshot_id(self):
         return self._load()['snapshot']
+
+    def heads(self, record_id):
+        """The explicitly preserved v1 format has one linear lineage head."""
+        return [self.history(record_id)[-1]]
+
+    def operation_heads(self):
+        head = self._load()['head']
+        return [head] if head is not None else []
 
     def grants_for(self, project):
         _id(project, 'Project ID')

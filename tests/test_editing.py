@@ -253,11 +253,15 @@ class EditingTests(unittest.TestCase):
         self.open()
         self.change()
         plan = self.plan()
-        real = self.vault._write_checkpoint
-        def lost_ack(sequence, digest):
-            real(sequence, digest)
+        hook = '_ack' if hasattr(self.vault, '_ack') else '_write_checkpoint'
+        real = getattr(self.vault, hook)
+        admitted = set(self.vault._load().get('operation_nodes', {}))
+        def lost_ack(*arguments):
+            real(*arguments)
+            if hook == '_ack' and arguments[0] in admitted:
+                return  # Recovery of existing witnesses is not this new write.
             raise OSError("acknowledgement lost after committed marker")
-        with patch.object(self.vault, "_write_checkpoint", side_effect=lost_ack):
+        with patch.object(self.vault, hook, side_effect=lost_ack):
             first = self.apply(plan)
         self.assertNotEqual(first["status"], "complete")
         self.assertEqual(first["failed_index"], 0)

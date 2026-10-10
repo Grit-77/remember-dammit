@@ -42,6 +42,11 @@ def overview(vault, *, project=None, personal=False, audience="private", limit=1
     admitted = {identifier: record for identifier, record in source_safe.items()
                 if record["state"] in {"active", "proposed"} and identifier not in historical_only}
     ordered = sorted(admitted)
+    lineages = {}
+    for identifier in ordered:
+        record = admitted[identifier]
+        lineage = record.get('lineage_id') or identifier
+        lineages.setdefault(lineage, []).append(identifier)
     backlinks = {identifier: [] for identifier in ordered}
     for identifier in ordered:
         for source in admitted[identifier].get("sources", []):
@@ -52,7 +57,9 @@ def overview(vault, *, project=None, personal=False, audience="private", limit=1
         record = admitted[identifier]
         sources = sorted(source for source in record.get("sources", []) if source in admitted)
         incoming = backlinks[identifier]
+        rivals = lineages[record.get('lineage_id') or identifier]
         records.append({**_metadata(record), "evidence": record["evidence"],
+                        "conflicts_with": [other for other in rivals if other != identifier],
                         "context_role": "reference_source" if record["kind"] == "source" else "memory",
                         "sources": [_metadata(admitted[source]) for source in sources[:_LINK_LIMIT]],
                         "backlinks": [_metadata(admitted[source]) for source in incoming[:_LINK_LIMIT]],
@@ -64,7 +71,8 @@ def overview(vault, *, project=None, personal=False, audience="private", limit=1
                             "scope": "personal" if personal else f"project:{project}"},
               "total_count": len(ordered),
               "summary": {"by_kind": dict(sorted(Counter(record["kind"] for record in admitted.values()).items())),
-                          "by_state": dict(sorted(Counter(record["state"] for record in admitted.values()).items()))},
+                          "by_state": dict(sorted(Counter(record["state"] for record in admitted.values()).items())),
+                          "conflicted_lineages": sum(len(values) > 1 for values in lineages.values())},
               "records": records,
               "omitted": {"limit": len(ordered) - len(records),
                           "source_dependencies": len(permitted) - len(source_safe)}}

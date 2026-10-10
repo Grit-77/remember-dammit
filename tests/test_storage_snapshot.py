@@ -47,7 +47,8 @@ class CorrectionSnapshotTests(unittest.TestCase):
     def test_snapshot_is_checked_after_acquiring_writer_lock(self):
         from contextlib import contextmanager
         from unittest.mock import patch
-        import remember_dammit.storage as storage
+        import importlib
+        storage = importlib.import_module(type(self.vault).__module__)
         original = storage.writer_lock
         observed = self.vault.snapshot_id()
 

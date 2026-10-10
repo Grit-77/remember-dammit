@@ -15,6 +15,7 @@ QueryText = Annotated[str, Field(min_length=1, max_length=4096)]
 Identifier = Annotated[str, Field(min_length=1, max_length=128)]
 AliasList = Annotated[list[ShortText], Field(max_length=100)]
 SourceList = Annotated[list[Identifier], Field(max_length=100)]
+HeadList = Annotated[list[dict[str, Identifier]], Field(min_length=1, max_length=1000)]
 
 
 def create_server(vault, *, project=None, personal=False):
@@ -76,6 +77,24 @@ def create_server(vault, *, project=None, personal=False):
                 if exc.code != "not_found":
                     raise
                 result["supersedes"] = None
+        for field in ('supersedes_all', 'conflicts_with'):
+            if field in record:
+                result[field] = []
+                for identifier in record[field]:
+                    try:
+                        read_record(identifier)
+                    except VaultError as exc:
+                        if exc.code != 'not_found':
+                            raise
+                    else:
+                        result[field].append(identifier)
+        if record.get('lineage_id'):
+            try:
+                read_record(record['lineage_id'])
+            except VaultError as exc:
+                if exc.code != 'not_found':
+                    raise
+                result['lineage_id'] = None
         return result
 
     def validate_sources(sources):
@@ -131,6 +150,51 @@ def create_server(vault, *, project=None, personal=False):
             read_record(record_id)
             return {"records": [clean_record(record) for record in vault.history(record_id) if visible(record)]}
         return invoke(operation)
+
+    def writable_lineage(record_id):
+        if not callable(getattr(vault, 'resolve', None)) or not callable(getattr(vault, 'delete', None)):
+            raise VaultError('migration_required', 'Causal memory requires explicit migration.')
+        if read_record(record_id)['scope'] != write_scope:
+            raise VaultError('write_denied', 'This lineage is read-only in the server selection.')
+        for head in vault.heads(record_id):
+            if read_record(head['id'])['scope'] != write_scope:
+                raise VaultError('write_denied', 'Every observed head must belong to this selection.')
+
+    @server.tool()
+    def heads(record_id: Identifier) -> dict[str, Any]:
+        """Inspect visible current lineage heads, including retraction state."""
+        def operation():
+            read_record(record_id)
+            if not hasattr(vault, 'heads'):
+                raise VaultError('migration_required', 'Causal memory requires explicit migration.')
+            values = [clean_record(record) for record in vault.heads(record_id) if visible(record)]
+            return {'heads': values, 'conflicted': len(values) > 1}
+        return invoke(operation)
+
+    @server.tool()
+    def resolve(record_id: Identifier, expected_heads: HeadList, title: ShortText, body: BodyText,
+                aliases: AliasList | None = None, sources: SourceList | None = None,
+                operation_id: Identifier | None = None) -> dict[str, Any]:
+        """Resolve exactly the observed heads in this server's write scope."""
+        def operation():
+            snapshot = vault.snapshot_id()
+            writable_lineage(record_id)
+            validate_sources(sources)
+            return clean_record(vault.resolve(record_id, expected_heads=expected_heads, title=title, body=body,
+                                               aliases=aliases, sources=sources, operation_id=operation_id,
+                                               actor='mcp', expected_snapshot=snapshot))
+        return invoke(operation, writes=True)
+
+    @server.tool()
+    def retract(record_id: Identifier, expected_heads: HeadList, operation_id: Identifier | None = None) -> dict[str, Any]:
+        """Logically delete an explicitly requested lineage, retaining history."""
+        def operation():
+            writable_lineage(record_id)
+            vault.delete(record_id, expected_heads=expected_heads, operation_id=operation_id)
+            # The root may be withheld because its historical sources lost access.
+            # A scoped receipt only echoes the caller's already visible ID.
+            return {'record_id': record_id, 'retracted': True}
+        return invoke(operation, writes=True)
 
     @server.tool()
     def remember(title: ShortText, body: BodyText, kind: ShortText = "note", aliases: AliasList | None = None, sources: SourceList | None = None, evidence: Literal["user-statement", "source-excerpt", "agent-inference", "observation"] = "agent-inference", operation_id: Identifier | None = None, state: Literal["active", "proposed"] = "active") -> dict[str, Any]:

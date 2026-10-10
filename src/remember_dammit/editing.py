@@ -68,9 +68,11 @@ def _directory(vault, value, *, new=False):
         path = Path(raw).absolute()
         _safe_path(path)
         resolved = path.resolve()
-        for forbidden in (vault.root.resolve(), vault.root.resolve().parent / ".remember-dammit-locks"):
+        for forbidden in (vault.root.resolve(),):
             if resolved.is_relative_to(forbidden) or forbidden.is_relative_to(resolved):
                 raise VaultError("invalid_workspace", "Working copies must be separate from the canonical vault and writer locks.")
+        from .local_state import reject_local_state_overlap
+        reject_local_state_overlap(vault.root, resolved)
         if new:
             if path.exists():
                 raise VaultError("destination_exists", "Working-copy destination must not already exist.")
@@ -439,6 +441,10 @@ def _preflight(data, selection, manifest, changes):
             continue  # Unedited notes are context, not correction targets.
         if _receipt(data, change) is not None:
             continue  # A journal receipt proves historical admission, not current state.
+        lineage = data.get('lineages', {}).get(entry['id'], entry['id'])
+        if len(data.get('lineage_heads', {}).get(lineage, [])) > 1:
+            conflicts.append({'code': 'competing_heads', 'id': entry['id']})
+            continue
         current = data["current"].get(entry["id"])
         if current is None or current["revision"] != entry["base_revision"] or current["state"] != "active":
             conflicts.append({"code": "stale_revision", "id": entry["id"]})

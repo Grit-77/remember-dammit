@@ -2,6 +2,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 from .errors import VaultError
 
 
@@ -26,11 +27,51 @@ def _write_fields(parser):
     parser.add_argument("--actor", default="local")
 
 
+def _read_json(path, limit=4 * 1024 * 1024):
+    try:
+        with open(path, 'rb') as handle:
+            raw = handle.read(limit + 1)
+        if len(raw) > limit:
+            raise ValueError
+        return json.loads(raw.decode('utf-8'))
+    except (OSError, ValueError, UnicodeError, RecursionError):
+        raise VaultError('invalid_plan', 'Specify a readable bounded UTF-8 JSON file.') from None
+
+
+def _head_set(path):
+    value = _read_json(path)
+    values = value.get('heads') if isinstance(value, dict) else value
+    if not isinstance(values, list) or len(values) > 1000:
+        raise VaultError('invalid_heads', 'Expected heads must be an explicit list of IDs and revisions.')
+    try:
+        return [{'id': item['id'], 'revision': item['revision']} for item in values]
+    except (KeyError, TypeError):
+        raise VaultError('invalid_heads', 'Each expected head needs its ID and revision.') from None
+
+
 def build_parser():
     parser = JsonArgumentParser(prog="remember-dammit", description="Local source-linked memory with explicit optional advisory assessment.")
     parser.add_argument("--vault", help="Explicit local vault directory (optional for import-plan and advisor-template)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize a vault without overwriting existing content")
+    commands.add_parser('heads', help='Inspect every current head of a record lineage').add_argument('record_id')
+    resolve = commands.add_parser('resolve', help='Resolve exactly the observed competing heads')
+    resolve.add_argument('record_id')
+    resolve.add_argument('--expected-heads', required=True, help='JSON heads report or ID/revision list')
+    _write_fields(resolve)
+    retract = commands.add_parser('retract', help='Create a portable lineage tombstone; retain history')
+    retract.add_argument('record_id')
+    retract.add_argument('--expected-heads', required=True)
+    retract.add_argument('--operation-id')
+    commands.add_parser('sync-export', help='Create a complete immutable transfer bundle').add_argument('--destination', required=True)
+    commands.add_parser('sync-import', help='Validate and import a complete transfer bundle').add_argument('--bundle', required=True)
+    commands.add_parser('sync-plan', help='Preview union with another copy of the same vault').add_argument('--source', required=True)
+    commands.add_parser('sync-apply', help='Apply an unchanged reviewed union plan').add_argument('--plan', required=True)
+    migration = commands.add_parser('migrate-plan', help='Preview explicit legacy-to-causal conversion')
+    migration.add_argument('--destination', required=True)
+    migration.add_argument('--backup', required=True)
+    commands.add_parser('migrate-apply', help='Apply a migration preview with an untouched source and backup').add_argument('--plan', required=True)
+    commands.add_parser('migrate-status', help='Inspect migration completion without opening the vault')
     remember = commands.add_parser("remember", help="Write a memory")
     _write_fields(remember)
     remember.add_argument("--scope", required=True)
@@ -140,7 +181,19 @@ def main(argv=None):
         args = build_parser().parse_args(argv)
         if args.command not in {"import-plan", "advisor-template"} and args.vault is None:
             raise VaultError("invalid_arguments", "An explicit --vault is required; use --help for usage.")
-        if args.command == "advisor-template":
+        if args.command == 'migrate-plan':
+            from .migration import preview_migration
+            result = preview_migration(args.vault, args.destination, args.backup)
+        elif args.command == 'migrate-apply':
+            from .migration import apply_migration
+            plan = _read_json(args.plan)
+            if not isinstance(plan, dict) or not isinstance(plan.get('source'), str) or Path(plan['source']).resolve() != Path(args.vault).resolve():
+                raise VaultError('invalid_plan', 'Migration plan must match the explicitly selected source vault.')
+            result = apply_migration(plan)
+        elif args.command == 'migrate-status':
+            from .migration import inspect_migration
+            result = inspect_migration(args.vault)
+        elif args.command == "advisor-template":
             from .advisors import validate_config
             config = {"schema": 1, "provider": args.provider, "mode": args.mode,
                       "model": args.model, "timeout_seconds": 5, "max_candidates": 3,
@@ -181,7 +234,30 @@ def main(argv=None):
                 result = {"vault_id": vault.vault_id, "initialized": True}
             else:
                 vault = Vault(args.vault)
-                if args.command == "edit-open":
+                if args.command in {'heads', 'resolve', 'retract'}:
+                    capability = {'heads': 'heads', 'resolve': 'resolve', 'retract': 'delete'}[args.command]
+                    if not callable(getattr(vault, capability, None)):
+                        raise VaultError('migration_required', 'This operation requires the causal format; preview migration first.')
+                    if args.command == 'heads':
+                        heads = vault.heads(args.record_id)
+                        result = {'heads': heads, 'conflicted': len(heads) > 1, 'snapshot': vault.snapshot_id()}
+                    elif args.command == 'resolve':
+                        result = vault.resolve(args.record_id, expected_heads=_head_set(args.expected_heads),
+                                               title=args.title, body=args.body, sources=args.sources,
+                                               aliases=args.aliases, operation_id=args.operation_id, actor=args.actor)
+                    else:
+                        result = vault.delete(args.record_id, expected_heads=_head_set(args.expected_heads), operation_id=args.operation_id)
+                elif args.command in {'sync-export', 'sync-import', 'sync-plan', 'sync-apply'}:
+                    from .replication import export_bundle, import_bundle, plan_merge, apply_merge
+                    if args.command == 'sync-export':
+                        result = export_bundle(vault, args.destination)
+                    elif args.command == 'sync-import':
+                        result = import_bundle(vault, args.bundle)
+                    elif args.command == 'sync-plan':
+                        result = plan_merge(vault, args.source)
+                    else:
+                        result = apply_merge(vault, _read_json(args.plan, 16 * 1024 * 1024))
+                elif args.command == "edit-open":
                     from .editing import open_editing
                     result = open_editing(vault, args.destination, project=args.project, personal=args.personal)
                 elif args.command == "edit-plan":
@@ -242,6 +318,12 @@ def main(argv=None):
         if args.command == "import-apply" and result["status"] == "partial":
             return 1
         if args.command in {"edit-plan", "edit-apply"} and result.get("status") in {"conflict", "partial"}:
+            return 1
+        if args.command == 'doctor' and result.get('ok') is False:
+            return 1
+        if args.command == 'migrate-status' and result.get('state') != 'complete':
+            return 1
+        if args.command.startswith(('sync-', 'migrate-')) and isinstance(result, dict) and (result.get('complete') is False or result.get('status') in {'conflict', 'partial', 'incomplete', 'invalid'}):
             return 1
         return 0
     except VaultError as exc:

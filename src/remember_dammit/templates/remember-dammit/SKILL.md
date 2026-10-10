@@ -29,8 +29,14 @@ Finish by actually calling `show` for the saved source and task IDs, and `recall
 
 1. **Recall:** use a concrete query before relying on an earlier decision. Use `context` when a bounded packet helps. Read sources, evidence, revision, state and omissions; no result means no remembered answer was found.
 2. **Save:** use `remember` for requested or already authorized durable knowledge. Supply source IDs and a unique operation ID. Keep uncertain inferences proposed. Do not store credentials or unrelated project material.
-3. **Correct:** inspect the current ID/revision with `show`, then call `correct` with `expected_revision` and a new operation ID. Use `history` for predecessors. On a conflict, read the current state; do not force an overwrite or directly edit immutable payload files.
+3. **Correct:** inspect the current ID/revision with `show` and the lineage with `heads` when available, then call `correct` with `expected_revision` and a new operation ID. Use `history` for predecessors. If multiple heads exist, read every visible competing version and its sources. Use `resolve` only for an authorized reconciliation, supplying the exact full observed list of IDs and revisions. A stale-head rejection requires reading the new heads and reconsidering the result; do not blindly retry with refreshed IDs. Never choose a winner by timestamps or directly edit immutable payload files.
 4. **Continue:** save a separate bounded checkpoint when authorized. Include goal, confirmed decisions, evidence and next action. Do not overwrite a global last-session file or assume automatic loading in the next client. The current MCP server writes only its fixed personal/project scope.
+
+## Offline copies and removal
+
+Use the same vault identity on each machine; independently initialized vaults are not replicas. Memory works offline without an advisor or server. Transfer immutable vault files or a reviewed owner CLI sync bundle; local indexes, locks, credentials and client configuration stay on each machine. Transfer/migration tools are owner CLI operations, not scoped MCP capabilities. Do not treat incomplete transfer as empty memory or a successful synchronization. Preserve files and report the diagnostic; retry the same reviewed transfer after the missing objects are available.
+
+Use `retract` only when removal is authorized, with the exact observed heads. Retraction preserves history and blocks stale replicas from reviving the lineage; it is not physical erasure. A revocation remains effective against old grants. Do not automatically regrant personal notes, rebind source IDs or widen scope to repair a missing result. Legacy vaults need an explicit previewed migration before these causal tools are available.
 
 ## Browse or edit working notes
 

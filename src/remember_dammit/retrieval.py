@@ -97,18 +97,27 @@ def _passages(body):
 
 
 def _ancestor_ids(record, by_id):
+    """Walk every visible predecessor, allowing shared DAG ancestors."""
+    def parents(item):
+        return item.get("supersedes_all") or ([item["supersedes"]] if item.get("supersedes") else [])
     seen = {record["id"]}
-    current = record
+    visiting = {record["id"]}
+    stack = [(record["id"], iter(sorted(parents(record))))]
     result = []
-    while current.get("supersedes"):
-        parent_id = current["supersedes"]
-        if parent_id in seen:
+    while stack:
+        try:
+            parent_id = next(stack[-1][1])
+        except StopIteration:
+            visiting.remove(stack.pop()[0])
+            continue
+        if parent_id in visiting:
             raise VaultError("integrity_error", "Cyclic correction history.")
+        if parent_id in seen or parent_id not in by_id:
+            continue
         seen.add(parent_id)
-        if parent_id not in by_id:
-            break
+        visiting.add(parent_id)
         result.append(parent_id)
-        current = by_id[parent_id]
+        stack.append((parent_id, iter(sorted(parents(by_id[parent_id])))))
     return result
 
 
@@ -193,7 +202,7 @@ def _rank(records, tokens, include_history):
     for record in candidates:
         if record["state"] == "active":
             lineage = ancestors.get(record["id"], [])
-            root = lineage[-1] if lineage else record["id"]
+            root = record.get("lineage_id") or (lineage[-1] if lineage else record["id"])
             roots.setdefault(root, []).append(record["id"])
     bundles = []
     emitted = set()
@@ -201,7 +210,8 @@ def _rank(records, tokens, include_history):
         if identifier in emitted:
             continue
         lineage = ancestors.get(identifier, [])
-        group = sorted(roots.get(lineage[-1] if lineage else identifier, [identifier]))
+        root = by_id[identifier].get("lineage_id") or (lineage[-1] if lineage else identifier)
+        group = sorted(roots.get(root, [identifier]))
         if include_history or len(group) < 2:
             group = [identifier]
         bundle = []
@@ -280,17 +290,9 @@ def context(vault, query, *, project=None, personal=False, budget_bytes=8000, au
 def reindex(vault):
     """Publish an inspectable owner-local projection; memory remains authoritative."""
     snapshot, records, _ = _snapshot(vault)
-    base = os.environ.get("REMEMBER_DAMMIT_STATE_HOME")
-    if base:
-        home = Path(base).expanduser()
-    elif os.name == "nt":
-        home = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))) / "remember-dammit"
-    else:
-        home = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))) / "remember-dammit"
+    from .local_state import local_state_directory
     identity = hashlib.sha256((str(vault.root.resolve()) + "\0" + vault.vault_id).encode()).hexdigest()
-    directory = (home / "indexes").resolve()
-    if directory.is_relative_to(vault.root.resolve()):
-        raise VaultError("invalid_input", "Local search state must be outside the portable vault.")
+    directory = local_state_directory(vault.root, "indexes")
     directory.mkdir(parents=True, exist_ok=True)
     destination = directory / (identity + ".sqlite3")
     handle, temporary = tempfile.mkstemp(dir=directory, suffix=".sqlite3")

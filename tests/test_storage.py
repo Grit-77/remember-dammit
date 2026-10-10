@@ -1,4 +1,4 @@
-"""Behavioral storage acceptance checks using disposable real vaults."""
+"""Preserved format 1 storage checks using disposable real legacy vaults."""
 import importlib.util
 import json
 import os
@@ -18,12 +18,13 @@ else:
 
 
 class StorageTests(unittest.TestCase):
+    """Legacy single-chain/checkpoint behavior stays explicit and unchanged."""
     def setUp(self):
         self.assertIsNotNone(Vault, 'The contract requires a storage.Vault implementation')
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / 'vault'
-        self.vault = Vault.initialize(self.root)
+        self.vault = Vault.initialize(self.root, format_version=1)
 
     def put(self, **kwargs):
         return self.vault.put(title='Original choice', body='Keep the original bytes.',
@@ -260,7 +261,7 @@ storage.Vault(root).put(title='Crash record',body='Submitted text',scope='person
 '''
         for stage in ['payload_flush', 'payload_publish', 'marker_flush', 'marker_publish', 'checkpoint_flush', 'checkpoint_publish']:
             with self.subTest(stage=stage):
-                vault = Vault.initialize(Path(self.temp.name) / stage)
+                vault = Vault.initialize(Path(self.temp.name) / stage, format_version=1)
                 proc = subprocess.run([sys.executable, '-c', script, str(vault.root), stage],
                                       capture_output=True, text=True, timeout=30)
                 self.assertEqual(proc.returncode, 73, proc.stderr)

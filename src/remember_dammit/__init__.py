@@ -1,3 +1,3 @@
 """Remember, Dammit. Model-independent local memory."""
 
-__version__ = "0.1.0a4"
+__version__ = "0.2.0a1"

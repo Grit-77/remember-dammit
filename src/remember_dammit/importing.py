@@ -170,11 +170,11 @@ def _scan(root):
 
 
 def _separate(root, vault):
+    from .local_state import reject_local_state_overlap
     target = vault.root.resolve()
-    locks = target.parent / '.remember-dammit-locks'
-    if (root.is_relative_to(target) or target.is_relative_to(root)
-            or root.is_relative_to(locks) or locks.is_relative_to(root)):
+    if root.is_relative_to(target) or target.is_relative_to(root):
         raise VaultError('invalid_source', 'Source and canonical target must be separate trees.')
+    reject_local_state_overlap(vault.root, root)
 
 
 def _safe_record(record, scope):
@@ -190,9 +190,13 @@ def _head(vault, identifier, scope):
         if exc.code == 'not_found':
             return None
         raise
-    if not history[0]['actor'].startswith('markdown-import:') or not _safe_record(history[-1], scope):
+    heads = vault.heads(identifier) if hasattr(vault, 'heads') else [history[-1]]
+    if len(heads) != 1:
+        raise VaultError('import_conflict', 'Import lineage is deleted or has competing heads; resolve it explicitly.')
+    current = heads[0]
+    if not history[0]['actor'].startswith('markdown-import:') or not _safe_record(current, scope):
         raise VaultError('import_conflict', 'Import identity has incompatible target content or policy.')
-    return history[-1]
+    return current
 
 
 def _operation(item, collection, scope):
