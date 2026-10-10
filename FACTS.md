@@ -1,6 +1,28 @@
 # Publication facts
 
-Implementation reviewed: `9cc5b7e` — source alpha 0.1.0a4, 2026-10-10. Initial core reviewed at `c8e4b2c`; Markdown import reviewed at `e429bb3` plus `2aacc9e`; workspace setup at `1a58324`; diagnostics and optional shadow assessment at `e3830bc`. Vault navigation and authoring are covered by the checks below; consult per-commit CI for the published tree. Run commands from this checkout in an environment installed with `python -m pip install -e ".[mcp]"`.
+Implementation reviewed: `f83357b` — source alpha **0.2.0a1**, 2026-10-10, implemented from base `093622ff13f18715bc9fdf17df1b5b1c7903aba7`. The receipts below identify source and reproducible checks; consult CI on the actual publication commit for platform results. No full-suite count, cross-platform pass or native-client acceptance result is asserted here. Run commands from an installed checkout: `python -m pip install -e ".[mcp]"`.
+
+Historical publication context: 0.1.0a4 was reviewed at `9cc5b7e`; initial core at `c8e4b2c`, Markdown import at `e429bb3`/`2aacc9e`, workspace setup at `1a58324`, and diagnostics/shadow assessment at `e3830bc`. Those are historical receipts, not evidence that the new format's platform matrix has passed.
+
+## Format-2 and replica claims
+
+| Public statement | Receipt | Scope and limits |
+| --- | --- | --- |
+| New initialization uses immutable causal format 2; v1 opens without automatic conversion | `src/remember_dammit/storage.py::Vault.__new__`, `storage_v2.py::CausalVault.initialize`; `python -m unittest discover -s tests -p test_causal_storage.py -v` | New/empty roots; preserved legacy dispatch. Version metadata is in `pyproject.toml`. |
+| Complete union retains independent adds, correction heads and revision bytes independent of file-arrival order | `storage_v2.py::_load`, `heads`, `history`; `python -m unittest discover -s tests -p 'test_replication*.py' -v` | Synthetic copies sharing one vault ID; an unknown omitted branch cannot be inferred. No native sync-client trial is claimed. |
+| Exact observed-head resolution and lineage tombstones | `storage_v2.py::resolve`, `delete`; `python -m unittest discover -s tests -p 'test_causal*.py' -v` | IDs and revisions compared under local lock; late unseen branches remain heads, tombstones retain bytes. This is not content purging or restoration. |
+| Concurrent revokes defeat unobserving grants; new successor IDs inherit no grant | `storage_v2.py::_project`, `_load`; `tests/test_causal_storage.py`, `tests/test_causal_interfaces.py` | Causal policy and selected transitive dependency fixtures; revocation cannot retract already delivered text. |
+| Operation-ID ambiguity is explicit; identity collisions do not overwrite content | `storage_v2.py::_load`, `_retry`, `_project`; `tests/test_replication.py` | Exact historical receipt replay differs from conflicting offline admission. Same record identity with differing content is refused. |
+| Bundle completion inventories bind paths, hashes, snapshots and operation frontier | `replication.py::_manifest`, `_bundle`, `export_bundle`; `tests/test_replication.py` | Full same-owner vault transfer, including personal scopes. Different from scoped Markdown snapshot export. |
+| Reviewed merge retries preserve partial progress and block incomplete policy delivery | `replication.py::_merged`, `_publication_order`, `_resume_details`, `apply_merge`; `tests/test_replication.py` | Witness-first publication, partial-prefix refusal, unchanged original-plan retry and unrelated-arrival rejection on synthetic fixtures. No distributed lock or consensus claim. |
+| Transfer default limits: 100,000 objects and 1 GiB object bytes | `replication.py::MAX_FILES`, `MAX_BYTES`, `_limits`, `_merged`; `tests/test_replication.py` | Bounds apply to configured object inventories/unions; not performance measurements. |
+| Locks, indexes and transfer staging are local and disposable | `local_state.py::_platform_state_root`, `_namespace`; `locking.py::writer_lock`; `retrieval.py::reindex`; `replication.py::_stage`; `python -m unittest discover -s tests -p test_local_state.py -v` | OS-account location, normalized root, environment independence, synthetic links and competing processes. One OS user/machine; no bind-mount equivalence or multi-user coordination claim. |
+| Missing known dependencies are incomplete; changed committed bytes are integrity errors | `storage_v2.py::_read_record`, `_nodes`, `_topology`; `replication.py::_bundle`; `tests/test_causal_storage.py`, `tests/test_replication.py` | Unreferenced/pending objects are diagnostics, not automatically admitted or deleted. Malformed bundle metadata can be `invalid_bundle`; different identity can be `vault_mismatch`. |
+| Previewed migration verifies a full backup and converts out of place with original preserved | `migration.py::preview_migration`, `apply_migration`, `inspect_migration`; `python -m unittest discover -s tests -p test_migration.py -v` | Complete source byte inventory, semantic/revision preservation, final backup readback, stale/occupied/partial/death fixtures. No live personal vault migration claimed. |
+| CLI bundle/migration/head examples use implemented commands | `cli.py::build_parser`, `_head_set`, `main`; `tests/test_causal_cli.py`; `python -m remember_dammit --help` | JSON files bind expected heads and reviewed plans; PowerShell 7 examples use UTF-8 without BOM. Local synthetic workflows do not prove cross-OS or native-client acceptance. |
+| Format-2 MCP has scoped heads, resolution and retraction tools | `mcp_server.py`; `tests/test_causal_mcp.py` | Real SDK stdio fixtures, fixed selection and ownership filtering; no native client success claim. |
+
+## Existing local features
 
 | Public statement | Receipt | Scope and limits |
 | --- | --- | --- |
@@ -25,7 +47,7 @@ Implementation reviewed: `9cc5b7e` — source alpha 0.1.0a4, 2026-10-10. Initial
 | Tests and platform observations | `python -m unittest discover -s tests -v`; per-commit [CI results](https://github.com/Grit-77/remember-dammit/actions/workflows/test.yml) | Native four-harness behavior is a separate, still-open acceptance matrix. |
 | Apache-2.0 license | `LICENSE`, `NOTICE`, `pyproject.toml`; owner decision 2026-10-10 | Applies to this publication revision; previous commits retain their recorded license text. |
 
-The repository's detailed architecture documents are proposals. Their planned capabilities must not be presented as shipped behavior; [STATUS.md](docs/STATUS.md) enumerates current boundaries.
+[VAULT.md](docs/VAULT.md) describes the implemented format-2 authority and [MULTI-MACHINE.md](docs/MULTI-MACHINE.md) the CLI workflow. Broader product/harness proposals remain distinct; [STATUS.md](docs/STATUS.md) enumerates current boundaries. No configured CI matrix is treated as an observed passing matrix.
 
 ## Publication copy changes
 
@@ -42,3 +64,6 @@ The repository's detailed architecture documents are proposals. Their planned ca
 - Added reviewed Markdown import at `cab0fc0` and `ac11b02`; removed its previous unimplemented label while retaining the editor-sync limit.
 - Added read-only setup diagnostics and opt-in shadow advisor adapters; replaced the unavailable-connector label with the actual CLI scope and retained live-provider verification limits.
 - Added scoped navigation and explicit working-note corrections. Kept canonical revisions immutable, preserved source/grant identity semantics and documented the new-folder-per-editing-round limit.
+- Updated the 0.2.0a1 candidate from base `093622f`: replaced current single-chain/head-checkpoint and sibling-lock claims with causal objects, immutable witnesses and OS-local state; retained v1 as an explicitly labeled legacy path.
+- Replaced the unimplemented offline-merge/migration labels with their actual explicit APIs; retained background/live-sync, native harness and cross-platform acceptance limits. No current suite count or live migration result was introduced.
+- Added same-owner full-bundle scope, exact-head resolution/retraction, partial-policy refusal, original-plan retry, unknown-branch omission and explicit rollback boundaries with source/test receipts.

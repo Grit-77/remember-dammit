@@ -56,6 +56,28 @@ A batch is **not all-or-none**. The output distinguishes `complete`, `conflict` 
 
 ## Start the next editing round
 
-Apply leaves every working file unchanged, including the manifest. Open a new working folder to see the current heads before another editing round. This first version does not refresh the old folder, watch your editor, merge competing text, propagate file deletions or synchronize machines.
+Apply leaves every working file unchanged, including the manifest. Open a new working folder to see the current heads before another editing round. This flow does not refresh the old folder, watch your editor, merge competing text or propagate file deletions. Explicit replica exchange is separate; see [MULTI-MACHINE.md](MULTI-MACHINE.md).
 
 Working copies and plans contain permitted private information. Keep them outside public repositories. Current bounds are 1 MiB per input file, 16 MiB total workspace input and 4 MiB per plan; a large set of before/after changes may need smaller editing rounds. These are input limits, not a large-vault performance claim.
+
+## Review offline conflicts
+
+Format 2 retains both independently admitted corrections when offline replicas
+exchange objects. A multi-head lineage needs an explicit resolution; the editing
+preview does not select the last history entry or overwrite another branch.
+Inspect the lineage with `history` and its current leaves with `heads`. History
+order is for presentation, not a rule for choosing the current answer.
+
+Save the `heads` JSON report outside the working folder and supply its path as
+`--expected-heads` to `resolve`. The command compares every observed ID and
+revision under the writer lock. A newly arrived head produces `stale_heads`;
+review the enlarged set and preview again. A branch arriving after a valid
+resolution remains another head if that resolution did not consume it. The
+[replica guide](MULTI-MACHINE.md#resolve-competing-heads) contains the commands.
+
+Resolution preserves the predecessors and their source records in history.
+Omitted sources use the predecessor union only when eligible; select explicit
+current sources when inherited evidence is no longer eligible. A new successor
+ID inherits no personal sharing grant. `retract` uses the same exact head-set
+guard to record a lineage tombstone, retaining history and bytes while omitting
+that lineage from default recall. Deleting a working file does not retract it.

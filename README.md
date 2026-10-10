@@ -4,7 +4,7 @@
 
 Local, source-linked memory shared by your AI agents.
 
-> **Source alpha · 0.1.0a4.** A working local engine, CLI and stdio MCP server. Workspace setup is provided for Claude Code, Codex, Cursor and Antigravity. Their actual native-client acceptance is still pending; no automatic hooks are installed.
+> **Source alpha · 0.2.0a1.** A local engine, CLI and stdio MCP server with a causal, portable vault format. Offline copies can exchange immutable objects and retain competing contributions. Native client acceptance and live sync-client trials remain pending; no automatic hooks are installed.
 
 A new session should not mean explaining the same decision again. Save what matters, correct it when it changes, and inspect the history behind the current answer.
 
@@ -32,9 +32,9 @@ python -m venv .venv
 .venv/Scripts/python.exe examples/demo.py --vault .local/demo-vault
 ```
 
-On macOS/Linux, substitute `.venv/bin/python` for `.venv/Scripts/python.exe`. The demo refuses an existing destination. It creates synthetic source notes, corrects SendGrid to Postmark, reopens the real vault, recalls the current decision using the old provider's name, and checks isolation from another project. It calls no AI model and does not simulate native-client acceptance.
+On macOS/Linux, substitute `.venv/bin/python` for `.venv/Scripts/python.exe`. The demo refuses an existing destination. It creates synthetic source notes, corrects a decision, reopens the vault, recalls the current decision using former terminology, and checks isolation from another project. It calls no AI model and does not establish native-client acceptance.
 
-See [installation and client configuration](docs/INSTALL.md) for explicit Windows commands. Nothing is published to PyPI yet; install from this checkout rather than an unrelated package-index name.
+See [installation and client configuration](docs/INSTALL.md) for explicit Windows commands. These instructions install the selected repository checkout.
 
 ## What works in this alpha
 
@@ -42,9 +42,12 @@ See [installation and client configuration](docs/INSTALL.md) for explicit Window
 - **Editable working notes.** Open a separate Markdown working copy, preview title/body changes and apply revision-checked corrections. Originals remain in history; concurrent edits become visible conflicts.
 - **Readable Markdown with immutable history.** Source-linked notes, decisions, preferences and session records share stable IDs.
 - **Explicit scope.** Personal, shared and project knowledge are distinct. A personal note reaches a project only through a specific grant.
-- **Corrections that preserve history.** Expected revisions prevent silent competing updates; former terminology can find the current decision.
+- **Corrections that preserve history.** Expected revisions guard local updates. Offline competing corrections survive as multiple heads; resolution names the exact observed IDs and revisions. Former terminology can find current decisions.
 - **Bounded recall.** Lexical passages, aliases, source citations, evidence labels, conflict bundles and omission notices fit a declared UTF-8 byte budget.
-- **Participating writers coordinate.** Cross-process locking, idempotent operation IDs, atomic commit markers and a committed-head checkpoint protect tested write/retry paths.
+- **Offline replica exchange.** Complete immutable-object bundles, previewed merges and resumable application preserve the validated union. A raw complete file union of copies with the same vault ID is also readable.
+- **Participating writers coordinate locally.** Per-user OS-local locks serialize cooperating writers on one machine. Immutable operations, acknowledgement witnesses and exact operation retries support interrupted-write recovery.
+- **Explicit v1 migration.** Preview a separate v2 destination and byte-for-byte backup; conversion preserves the original v1 vault for rollback.
+- **Retraction and revocation survive old copies.** Lineage tombstones prevent old descendants from restoring retracted memory. Concurrent revokes defeat grants that have not observed them.
 - **Inspectable failures.** Doctor reports changed/missing committed content, orphan payloads and revoked-source dependencies.
 - **Local MCP and CLI.** The server is bound to one project or personal selection. It cannot grant itself wider access.
 - **Workspace setup.** Preview or apply the MCP entry and packaged skill for four harnesses, preserving unrelated settings and backing up changed files. Read-only configuration proposals remain available.
@@ -53,7 +56,9 @@ See [installation and client configuration](docs/INSTALL.md) for explicit Window
 - **Optional shadow assessment.** Use Jev or loopback Laya through the owner CLI with explicit configuration, egress checks and unchanged baseline recall.
 - **Browsable snapshots.** Export a selected scope into a new Markdown folder with a Home page, source links and optional history. Exported edits do not update live memory.
 
-The optional on-disk SQLite projection is disposable. Current search validates source records and builds its scoped FTS index in memory; large-vault performance has not been benchmarked.
+Locks, optional SQLite projections and transfer staging live in OS-local state outside the portable vault. Current search validates source records and builds its scoped FTS index in memory; large-vault performance has not been benchmarked.
+
+See [multiple-machine use and migration](docs/MULTI-MACHINE.md) for the actual CLI workflow. Initialize once, then copy that vault's identity and immutable objects to the other machine. Separately initialized vaults have different identities and cannot be merged as replicas. Bundle transfer is implemented; a background sync service and live sync-client acceptance are separate work.
 
 ## Work with your notes
 
@@ -75,7 +80,7 @@ Generated configurations have been exercised with an SDK stdio client. That esta
 
 A full personal second brain: preferences, inbox, original sources, connected knowledge, projects, independent session cards and reviewable history. Browse the [illustrative vault](examples/vault/Home.md) for the intended organization.
 
-Automatic editor refresh/merge, offline multi-machine synchronization, semantic embeddings, automatic hooks, and automatic or result-changing advisor modes are **not implemented yet**. The alpha initializes a separate empty vault and can import Markdown copies through a reviewed plan. It treats direct edits to committed revision payloads as integrity errors. Optional shadow adapters assess bounded candidates; live provider readiness and answer quality have not been established by the protocol tests.
+Automatic editor refresh/text merge, background synchronization, semantic embeddings, automatic hooks, and automatic or result-changing advisor modes remain outside this release. The alpha initializes a separate empty vault, imports Markdown copies through a reviewed plan, and explicitly converts validated v1 vaults out of place. Direct edits to committed revision payloads are integrity errors. Optional shadow adapters assess bounded candidates; live provider readiness and answer quality have not been established by the protocol tests.
 
 ## Read more
 
@@ -83,6 +88,7 @@ Automatic editor refresh/merge, offline multi-machine synchronization, semantic 
 - [Install and configure clients](docs/INSTALL.md)
 - [Product scope](docs/PRODUCT.md)
 - [Vault architecture](docs/VAULT.md)
+- [Offline replicas, merge and migration](docs/MULTI-MACHINE.md)
 - [Harness contract](docs/HARNESSES.md)
 - [Optional Jev/Laya design](docs/PROVIDERS.md)
 - [Claim evidence and verification commands](FACTS.md)

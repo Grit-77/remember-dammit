@@ -1,181 +1,151 @@
-# Vault architecture
+# Vault format and authority
 
-Proposal, 2026-10-10. Nothing in this document is an implemented guarantee.
+Implemented format 2 in source alpha 0.2.0a1. Broader organization and automation
+ideas in [PRODUCT.md](PRODUCT.md) are separate from this storage contract.
 
-## The organizing idea
-
-The vault belongs to the person. Harnesses visit it; models help reason about it. Neither owns its schema or gets a separate copy of its knowledge.
-
-```mermaid
-flowchart TD
-    H[Claude Code / Codex / Antigravity / Cursor / other clients] --> A[Capability-specific adapters]
-    A --> P[One versioned CLI / JSON / MCP contract]
-    P --> C[Vault core: scope, revisions, retrieval, context, recovery]
-    C --> M[Readable Markdown, retained sources, revision history]
-    C --> I[Rebuildable local search and link indexes]
-    C -. optional bounded assessment .-> J[Jev / Laya / future advisors]
-    J -. advice only .-> C
-```
-
-The first release is a general vault even if implementation proceeds in small testable slices.
-
-## Human organization
+## Portable objects
 
 ```text
 My Vault/
-  Home.md                  navigation and current areas of interest
-  You/                     preferences, principles, goals
-  Inbox/                   captured material awaiting organization
-  Sources/                 original notes and retained source excerpts
-  Knowledge/               concepts, people, lessons, linked explanations
-  Projects/<project>/      overview, decisions, questions, current work
-  Journal/                 dated observations and outcome links
-  Sessions/<session-id>/   independent session cards and contributions
-  Archive/                 visible historical material when useful
-  Attachments/             selected source files; indexed only by policy
   .remember/
-    vault.json             portable ID, schema and disclosure policy
-    revisions/             immutable Markdown revision payloads
-    operations/            immutable committed operation metadata
-    proposals/             pending contributions and conflicts
+    vault.json                  immutable schema, vault ID, initial grants
+    revisions/<sha256>.md       immutable exact Markdown bytes
+    operations/<digest>.json    immutable causal operations
+    acks/<operation>.json       immutable acknowledgement witnesses
 ```
 
-This is a starter layout, not an indexing rule or a forced migration. Existing folder names and note bodies remain intact during adoption. A preview identifies candidate files, project mappings, exclusions, duplicate IDs and unsupported metadata before writing anything. The runtime never determines access from a folder's English name alone.
+Each operation contains its vault ID, request operation ID and request digest,
+observed parent frontier, action, admitted result and consumed predecessor IDs.
+Its digest names the canonical JSON object. A revision's SHA256 names its exact
+bytes. Timestamps are display metadata; they do not select correction or policy
+winners. Format 2 has no authoritative mutable `head.json` or sequence counter.
 
-Machine paths, credentials, process locks, pending local transaction intents, logs, SQLite databases and embedding caches live in machine-local state outside the portable vault. A local binding maps a stable vault ID and project IDs to paths on that machine.
+Readers validate immutable objects and derive the causal graph directly. The
+snapshot depends on immutable configuration and operation digests, rather than
+arrival order, a local path, indexes or acknowledgement order. A complete object
+union of valid format-2 copies with the same vault identity can be opened without
+an extra merge operation. Separately initialized vaults have distinct identities.
+See [MULTI-MACHINE.md](MULTI-MACHINE.md) for exchange commands.
 
-## Scope, lifetime, and disclosure are separate
+Bundles include the managed immutable objects and a final inventory marker,
+not local locks, indexes, provider settings or machine bindings. A bundle is a
+full same-owner replica transfer, including personal content. Scoped Markdown
+snapshots are a different output for selected readable content.
 
-| Dimension | Examples | Rule |
-| --- | --- | --- |
-| Scope | personal, explicitly shared, project:atlas, session:ID | A context request names permitted scopes. A project cannot inherit all personal notes implicitly. |
-| Lifetime | durable, session, review-after date | A temporary observation does not automatically become a lifelong preference. |
-| Disclosure | private, shared, public; remote assessment allowed/denied | Being locally relevant does not authorize transmission to an optional provider or public export. |
+## Heads, history and retries
 
-A project-specific exception can coexist with a general preference. Context must label both and their applicability rather than silently deleting one. Claims about code, personal preferences, and historical work use different freshness rules.
+Records retain body text, kind, scope, state, evidence class, disclosure policy,
+source IDs and aliases. A correction creates a new record ID and revision rather
+than overwriting its predecessor. Source links identify specific records; they
+do not automatically follow a correction to a new ID.
 
-Personal sharing requires a trusted policy entry mapping a project ID to specific record IDs and destinations (for example, local agent context only). Default is deny. Note prose, folder membership, source links and advisor output cannot create a grant. A grant covers the current admitted revisions of its named ID; a successor with a new ID needs an authorized grant update, not automatic inheritance through a supersedes edge. Such an update can be included in an already authorized correction policy without adding a confirmation dialog to every write.
+Format 2 projects `lineage_id`, `supersedes_all` and `conflicts_with` alongside
+existing fields. `heads(record_id)` returns a lineage's current leaves.
+`history(record_id)` returns retained records in deterministic parent-before-child
+order. The last history entry is not a current-head selector. Offline competing
+corrections remain separate heads with their bodies and evidence preserved.
+Scoped recall/context report eligible conflicts rather than choosing a winner.
 
-Grants live in portable vault policy, separately from note content, and policy changes have revision/conflict rules. A conflicting or malformed policy fails closed for affected disclosure. Revocation invalidates context/provider caches; each request rechecks the current policy revision. It cannot retract text already delivered to an external agent. The sample vault includes a non-executable policy sketch to make the intended grant explicit.
+`correct` requires the locally sole current head and expected revision. `resolve`
+requires the exact nonempty set of observed head IDs/revisions. Another arriving
+branch invalidates an old set with `stale_heads`. A branch arriving after a valid
+resolution remains a competing leaf if that resolution did not consume it.
+Ordinary scope, metadata and source-eligibility checks also apply to resolution.
 
-These controls govern the core's outputs and provider payloads. They do not sandbox a harness that already has direct filesystem access. Connecting a cloud-backed agent can transmit selected context to its normal model provider; local storage alone does not imply otherwise.
+Request operation IDs support exact retries of their historical admitted result,
+including after later corrections. Reusing an ID with a different request or
+different result creates `operation_conflict`: sound operations are retained,
+diagnostics name the ambiguity, and retry of that ID is refused. Different
+content claiming one record identity is `identity_conflict`; no filename or
+timestamp rule resolves it by overwriting a revision.
 
-## Content model
+## Scope and remove-wins policy
 
-Rich notes remain ordinary Markdown. The engine also understands small structured records where needed. Do not force a person's entire knowledge into one-fact-per-file forms.
+Personal, shared, project and explicit owner session scopes remain distinct.
+Project delivery can include its records, shared records and specifically granted
+personal IDs, subject to disclosure and dependency checks. A fixed-selection MCP
+server cannot choose another project or grant itself access. These checks govern
+core outputs; they do not sandbox a client with direct filesystem access.
 
-| Object | What it carries |
+Initial grants live in immutable configuration. Later grants/revokes are causal
+operations. For an exact project/record key, a grant is effective only when it
+has observed every known revoke; an old or concurrent grant cannot cancel a
+revoke. An intentional later grant can reauthorize that exact ID after seeing
+the revocations. A correction or resolution's new ID inherits no grant. Merged
+recall/context delivery re-evaluates eligibility and withholds content whose source dependencies
+are no longer disclosed or active.
+
+`retract` records a lineage tombstone with the exact-head guard. It retracts the
+lineage and descendants, including corrections admitted on an older offline
+copy. Replaying old bytes or granting a record does not restore that lineage.
+Default recall/context omit it; explicit history retains the records and doctor
+reports tombstone evidence. Content erasure and automatic restoration are not
+provided by this command.
+
+## Publication and incomplete copies
+
+Managed writes publish immutable payloads and operations, then acknowledgement
+witnesses. The operation marker is the admission point. A valid marker without
+its acknowledgement can survive a crash; exact retry repairs the missing
+witness. An unreferenced payload is not admitted as a record.
+
+Explicit merge validates the complete proposed union before admission. It
+publishes witnesses for validated operations before new operation markers,
+including a witness for a crash-surviving operation with no source acknowledgement.
+A partial copy with missing witnessed operations refuses ordinary reads/writes,
+rather than exposing a grant before the advertised revoke arrives. Exact-plan
+retry permits progress confined to its reviewed inventory; unrelated source or
+target changes require a fresh preview.
+
+| Condition | Meaning |
 | --- | --- |
-| Source | Origin, capture time, retained or reference-only status, content revision, passage anchor. |
-| Knowledge note | Human-readable explanation and typed links to other notes/sources. |
-| Claim or decision | Statement, scope, evidence class, source references, lifecycle state, revision relationships. |
-| Session card | Session ID, owning adapter/actor, project, objective, selected outcomes, open questions, next action. |
-| Summary | Readable synthesis plus the exact dependency revisions from which it was made. |
-| Operation | Globally unique operation ID, payload digest, base revision(s), actor, changed IDs, commit metadata. |
+| Missing referenced parent, payload or acknowledged operation | `incomplete_transfer`; retain bytes and supply missing objects from another copy. |
+| Changed digest-named payload, malformed committed operation or invalid causal graph | `integrity_error`; preserve objects and inspect a sound copy. |
+| Different vault identity on transfer | `vault_mismatch`; separate vaults are not replicas. |
+| Ambiguous request or record identity | `operation_conflict` or `identity_conflict`; retain contributions and inspect diagnostics. |
+| Unreferenced payload or pending publication file | Doctor reports orphan/uncommitted files; they are not automatically admitted or deleted. |
 
-Evidence classes distinguish user statements, source excerpts, agent inferences, and observed command results. A high model score is not verification. Agent identity records provenance, not authority.
+A bundle inventory detects omitted advertised objects. A raw copy cannot reveal
+an entirely unknown branch omitted with its witnesses. Restoring a complete older
+tree with no retained later witness is indistinguishable from genuinely older
+history. The format does not establish consensus or authenticated authorship.
 
-Managed properties use a namespaced, flat schema to avoid clashing with existing Obsidian properties. Illustrative fields:
+## Machine-local state
 
-```yaml
-rd_schema: 1
-rd_id: decision-atlas-email-002
-rd_kind: decision
-rd_scope: project:atlas
-rd_state: active
-rd_evidence: user-statement
-rd_disclosure: private
-rd_remote_allowed: false
-rd_sources:
-  - source-atlas-email#current-choice
-rd_supersedes:
-  - decision-atlas-email-001
-aliases:
-  - transactional email
-  - email provider
-```
+Writer locks, optional SQLite projections and transfer staging use a stable
+per-user OS-local namespace outside the vault. Windows uses the account's Local
+AppData known folder; macOS uses `~/Library/Application Support`; Linux uses the
+account home's `~/.local/state`. A normalized resolved root identifies the local
+namespace before initialization and after reopening.
 
-Stable IDs survive renaming. A revision is a digest of defined canonical bytes, not a manually incremented frontmatter number. Reference metadata binds citations to source ID + revision + passage/quote digest; a path or URL alone is insufficient evidence of unchanged content. Bodies retain normal clickable links for humans.
+Temp/cache environment variables do not choose another writer-lock authority.
+Linked state paths and overlap with the vault or its selected content parent
+are rejected; account-home and filesystem-root container parents are handled
+separately. There is no sibling `.remember-dammit-locks` directory. `reindex`
+rebuilds a disposable local SQLite projection; search validates source data and
+builds its scoped FTS index in memory.
 
-Unmanaged notes can be adopted without rewriting frontmatter: the portable adoption map supplies IDs and declared scope. Renames are reconciled explicitly when identity is ambiguous. Equal content does not prove that two files are the same note. Duplicate IDs, malformed metadata, Unicode/case collisions, and paths outside the selected vault are surfaced rather than silently reassigned.
+Locks serialize participating threads/processes for one OS user on one machine,
+and are released on process death. They are advisory, not distributed locks.
+External file arrival is handled through validation and snapshot rechecks.
+Different OS users do not coordinate through this namespace; bind-mount/hardlink
+aliases are not established as the same root.
 
-## A useful knowledge lifecycle
+## Legacy format and migration
 
-1. **Capture:** selected text or source references enter the inbox with provenance. Attachments require explicit inclusion; binaries are not silently executed or parsed with arbitrary external tools.
-2. **Organize:** an active agent or human proposes concepts, aliases, links, and extracted claims. Exact links/backlinks are indexed locally; semantic relationships inferred by a model remain labeled proposals.
-3. **Admit:** a user action or a standing, scoped capture policy can authorize a valid contribution. There is no mandatory confirmation dialog for every note. An advisor score cannot supply authorization.
-4. **Use:** retrieve eligible passages with their scope, status, provenance and applicability. Return a real no-result state when needed.
-5. **Correct:** a successor names its predecessor and expected revision; history remains navigable and searchable by former terminology.
-6. **Maintain:** flag orphaned links, stale source references, unresolved branches, possible duplicate proposals, and aged session cards. Review recommendations do not delete durable knowledge automatically.
+Format-1 vaults remain readable/writable through the preserved implementation.
+That single-chain format uses legacy `head.json` and cannot represent independent
+sequence branches. Opening it does not convert it.
 
-State and relations are explicit. `supersedes`, `retracts`, `supports`, `opposes`, and `derived-from` mean different things. Time alone does not select the true claim. A summary becomes review-needed when a dependency changes; a file hash change does not prove the summary false.
+`migrate-plan` binds a validated source snapshot and complete byte inventory to
+new destination/backup paths. `migrate-apply` verifies a byte-for-byte backup,
+converts into a separate v2 directory, and checks source, destination and final
+backup before reporting success. Vault/record identities, committed revision
+bytes, request identities and policy semantics are preserved. Original files
+remain usable. Interrupted destinations retain an incomplete marker. Recovery
+uses a new preview with fresh paths.
 
-No single mutable Last-Session note is shared by all agents. Session cards are independent. A project overview can link to several cards and is updated through expected-revision rules.
-
-## Authority and storage
-
-Markdown owns the content. Portable committed revision payloads and operation metadata own admitted history and head relationships. SQLite owns only rebuildable projections; it cannot silently override those sources.
-
-Visible notes are editable authoring surfaces. Committed revision snapshots preserve the exact content used by a past operation. This is version history, not a second independently editable memory database.
-
-For each materialized note, portable metadata distinguishes the admitted head revision(s) from the last materialized revision/digest. Local observations track the current file digest. If the visible file still equals its last materialized digest while an admitted head has advanced, the file is **surface-behind**, not a new external edit. Retrieval uses the admitted head and reports that the visible file awaits refresh, with a link to the retained revision and a patch preview. If the file differs from its last materialized digest, reconcile it as an external candidate based on that materialized revision, preserving any newer admitted head as a competing input. An applied patch is acknowledged only after readback confirms its exact digest; a mismatched readback remains unresolved. No silent reset of the visible file is permitted.
-
-Before retrieval, synchronize observed edits for relevant included sources. A changed authoring surface is a new observed revision, not an excuse to rewrite the old committed snapshot. Show it as pending/review-needed until reconciled under the capture policy. Do not silently serve an old admitted revision as the current version of an externally changed note. Ordinary source search may expose the newly observed text with its provisional status; current-decision context must disclose uncertainty or omit it with a reason.
-
-For managed operations:
-
-1. Validate the vault, schema, source eligibility, expected base revisions and scoped write authority.
-2. Acquire the participating-writer lock and reconcile pending recovery. Under the lock, re-read current heads, source observations and policy, then revalidate expected bases and scoped write authority. A pre-lock check alone cannot authorize publication.
-3. Persist an intent and immutable revision payloads; record their digests. Hold the participating-writer lock throughout publication.
-4. Immediately before publication, recheck the observed bases/head set and authority under the lock. Publish an immutable commit manifest referencing the complete payload set. This is the commit point for core readers. External-editor races still follow the separate proposal/reconciliation contract below.
-5. Update derived indexes, then acknowledge the operation. Retry with the same operation ID returns the original outcome; a changed payload under that ID is an error.
-
-Recovery completes projection updates for valid commits and exposes incomplete or corrupt commits. Reindexing must reproduce heads, corrections and conflicts from portable sources alone. Durable publication mechanics, flush behavior, locks and crash recovery must be proven on each supported operating system before release.
-
-### External-editor limit
-
-An app lock does not lock Obsidian or an arbitrary text editor. Atomic replacement alone cannot prevent a human edit from being overwritten in a race.
-
-The safe default is therefore: **agent changes to an existing externally editable note are separate Markdown revision proposals, not automatic in-place rewrites.** Agents may directly create new authorized notes and correction records under unique IDs. Reconciliation preserves the observed human revision and agent proposal as competing inputs. Automatic materialization requires an explicitly cooperative editing path; otherwise provide an inspectable patch/export for application by the owner.
-
-Do not promise to preserve every keystroke made between scans. Unobserved editor changes need that editor's history or a filesystem backup. Preserve all payloads actually submitted to the engine.
-
-## Retrieval and context quality
-
-1. Resolve vault, project, explicitly shared personal scope, disclosure policy, source status, and unresolved branches.
-2. Retrieve heading-aware passages with local lexical search, aliases and bounded explicit-link expansion. Gate before expansion and again before output; unauthorized neighbor titles must not leak.
-3. Optionally add semantic candidates through a separate embedding interface. Record model/index version and locality. The lexical baseline remains available.
-4. Optionally assess eligible candidates through an advisor. It can select only IDs actually in the bounded candidate set.
-5. Resolve correction chains and include required conflict/applicability context as indivisible bundles.
-6. Pack whole passages and mandatory metadata inside the portable budget, then recheck source revisions and current disclosure before delivery.
-
-The packet contains a schema version, vault ID, observed snapshot, selected IDs/revisions, passages, source citations, evidence class, scope, warnings, selection reasons, omitted counts and reasons, and provider/fallback status. It does not dump the full vault.
-
-Use a defined UTF-8 byte budget in the portable protocol. Headers, escaping, source labels, warnings and omission notices count. Token estimates are labeled estimates unless a specific tokenizer and version are declared. If a minimum required uncertainty bundle cannot fit, return an explicit budget-too-small result instead of implying a settled conclusion.
-
-`explain` should answer: “Why did you include this?”, “Why did you omit that?”, and “Which source version did this come from?” Explanations obey the same scope rules as retrieval.
-
-Test English and Turkish fixtures because the owner works in both. Lexical recall is not universal paraphrase understanding; source/query cases that require semantic matching must be evaluated separately. No accuracy percentage is specified before a reproducible baseline exists.
-
-## Synchronization, deletion, and recovery
-
-The format supports unique operation IDs, multiple heads and tombstones from the beginning. A later optional sync transport moves portable files; it does not decide which conflicting decision wins.
-
-- Never sync local SQLite, locks, machine paths, credentials or caches.
-- Offline competing successors remain multiple heads. Resolution names every observed head and refuses a stale/incomplete set.
-- A synced deletion is a tombstone, so an older device cannot silently resurrect the note. Purging content/history is a separate deliberate operation with disclosed backup implications.
-- Import copies and conflicted Markdown files are reconciled through IDs and parents, not file timestamps or union merge.
-- Backup includes content, retained attachments, committed revisions, policy and operation metadata. Restore validates references and builds fresh local indexes.
-- Migrations provide a dry run and recoverable backup, preserve external edits, and refuse unsafe downgrades.
-
-## Inspection surfaces
-
-Planned operations: `doctor`, `explain`, `history`, `conflicts`, `reconcile`, `reindex`, and backup/restore. Exact command syntax is not implemented. Reports identify malformed files, ignored imports, stale references, incomplete commits and provider failures without claiming to repair everything automatically.
-
-## Five hard acceptance gates
-
-1. Four-harness correction with a personal default, a project exception, and an unrelated sensitive source: each receives only its permitted, appropriately scoped current context.
-2. Two agents plus a human editor: preserve submitted changes, handle renames/malformed metadata, and expose competing revisions without claiming an unsafe overwrite succeeded.
-3. Kill the process at every durable-write boundary, retry operation IDs, and rebuild SQLite: content, head sets, supersession, and recovery results remain consistent.
-4. Offline forks plus source deletion, delivered in either order: same unresolved heads, no silent resurrection, and rejection of resolution based on incomplete heads.
-5. A mixed corpus of opposing claims, stale summaries, moved sources, prompt-like source text and oversized records: budget and scope hold, and uncertainty survives packaging.
+Rollback is explicit path selection: keep using the original or select the
+verified backup. V2-only contributions are absent there; preserve/export those
+before discarding a new copy. No automatic in-place migration, cleanup or
+downgrade of a multi-head graph is provided. See [MULTI-MACHINE.md](MULTI-MACHINE.md).

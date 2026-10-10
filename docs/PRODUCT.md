@@ -65,9 +65,9 @@ Add advisor contracts, initially shadow evaluation; a Jev connector and separate
 
 ### D. Maintenance and broader distribution
 
-Add a vault inspector UI, evaluated synchronization workflows, further harness adapters, importers, and quality-of-life automation. Versioned storage and conflict semantics must exist before enabling cross-machine synchronization.
+Add a vault inspector UI, evaluated synchronization workflows, further harness adapters, importers, and quality-of-life automation. Format-2 causal storage and explicit transfer bundles now provide offline merge semantics; live synchronization-service integration still needs separate evaluation.
 
-No live synchronization service or semantic merge is implied by portable files. Never copy a live SQLite database between machines.
+No live synchronization service is bundled. Application-level causal merge validates transported immutable objects; Git or Syncthing alone does not resolve decisions. Never copy a live SQLite database between machines.
 
 ## Acceptance families
 

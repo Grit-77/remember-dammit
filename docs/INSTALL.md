@@ -1,6 +1,6 @@
 # Install the source alpha
 
-This is a runnable **0.1.0a4 source alpha**. Its CLI, local stdio MCP server and
+This is a **0.2.0a1 source alpha**. Its CLI, local stdio MCP server and
 configuration proposal generator share one local vault. The four named clients
 are integration targets: Claude Code, Codex, Cursor and Google Antigravity still
 need real-client acceptance. Every generated proposal says `tested_live: false`.
@@ -26,6 +26,22 @@ path such as `/home/owner/Memory Vault`. The core alone can be installed with
 launch the interpreter containing the installed package. A source checkout in
 the current working directory is insufficient when the client starts elsewhere.
 The memory core makes no provider calls and needs no model API key.
+
+New initialization creates format 2. Opening an existing format-1 vault leaves
+its format unchanged; installing this version does not migrate memory. Use the
+[multiple-machine and migration guide](MULTI-MACHINE.md) to preview a separate
+destination and backup before an explicit conversion. Initialize once for a
+replica group; copy that identity to other machines rather than initializing
+each replica independently.
+
+Locks, optional indexes and transfer staging use the OS account's local state
+directory: Windows Local AppData, macOS `~/Library/Application Support`, or
+Linux `~/.local/state`, under a `remember-dammit` namespace. Environment variables
+such as `TEMP`, `LOCALAPPDATA`, `XDG_STATE_HOME` and
+`REMEMBER_DAMMIT_STATE_HOME` do not select a different lock authority. Linked
+state paths and overlap with the vault or its selected content parent are refused;
+account-home and filesystem-root container parents are handled separately.
+Keep this state out of sync; it is not part of a portable replica.
 
 ## Preview a configuration
 
@@ -138,8 +154,7 @@ changes while exporting, the operation fails and leaves `INCOMPLETE.md`; it take
 precedence over any completion marker. Partial exports are not completed snapshots.
 The exporter does not repair sources or delete incomplete output automatically.
 Finalization checks the snapshot and removes the incomplete marker under the
-vault's cooperating writer lock; the vault parent needs access for that local
-lock directory. A revocation after this completion point cannot retract bytes
+vault's cooperating writer lock in OS-local state. A revocation after this completion point cannot retract bytes
 already exported. Arbitrary external editors do not participate in the lock.
 
 ## Import existing Markdown
@@ -172,3 +187,9 @@ Replace the client and paths as needed. The JSON report checks configuration, pa
 ## Navigate and edit notes
 
 Use the CLI or MCP `overview` to browse the selected vault without a query. For deliberate Markdown edits, follow [WORKING-NOTES.md](WORKING-NOTES.md). The `edit-open`, `edit-plan` and `edit-apply` commands keep authoring files separate from immutable revisions, preview corrections and refuse stale heads. They do not install file watchers or synchronize an editor automatically.
+
+For competing offline corrections, inspect `heads`, review the bodies and use
+`resolve` with the saved exact head set. Use `retract` for a history-preserving
+lineage tombstone. Resolution and retraction require format 2; legacy `heads`
+remains available. See
+[MULTI-MACHINE.md](MULTI-MACHINE.md) for executable examples and recovery limits.

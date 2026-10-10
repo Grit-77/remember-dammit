@@ -1,50 +1,108 @@
 # Source alpha status
 
-Version 0.1.0a4, 2026-10-10. This document separates current implementation from the broader architecture proposals.
+Version 0.2.0a1, 2026-10-10. This describes implemented behavior; broader product
+and harness proposals remain separate.
 
-## Implemented
+## Portable memory
 
-The local core initializes a new empty vault, persists immutable Markdown revisions, links records to sources, creates scoped corrections, preserves history, grants/revokes selected personal records, and diagnoses integrity and source-scope problems. A durable head checkpoint detects acknowledged journal-tail truncation, including lost revocations.
+New initialization uses format 2: immutable Markdown revisions, causal operations
+and acknowledgement witnesses. Readers derive current state from the graph; no
+format-2 sequence counter or authoritative mutable head file selects a winner.
+Complete raw object union and explicit offline bundles preserve independent adds
+and competing corrections from copies with the same vault ID.
 
-Retrieval validates canonical records, applies scope/disclosure/dependency rules, ranks heading/paragraph passages with SQLite FTS5, follows correction terminology, and returns bounded UTF-8 context. Historical-only sources are excluded from default recall so an obsolete instruction does not return through its old evidence. Explicit history remains available. This whole-source rule is conservative; it may exclude other useful passages from a source cited only by obsolete decisions. Passage-level evidence relationships remain future work.
+The CLI exposes `heads`, `resolve` and `retract`. Resolution compares an exact
+observed set of head IDs/revisions. An unseen branch remains visible when it
+arrives later. Retraction is a lineage tombstone: history survives and an old
+offline correction cannot restore the lineage. Grants remain specific to record
+IDs; concurrent or old grants cannot cancel a known revoke. Scoped delivery
+re-evaluates source eligibility after union.
 
-The CLI and optional official-SDK MCP server invoke the same core. Project MCP servers have a fixed scope, cannot grant access, and cannot edit a granted personal record. Scope/source checks traverse dependencies and recheck the observed snapshot before returning. The context budget covers the canonical packet and its model-facing MCP text; protocol envelope overhead and client prompt overhead are outside that budget.
+`sync-export` publishes an immutable-object inventory with `COMPLETE.json`.
+`sync-plan` previews a complete source bundle and proposed union; `sync-apply`
+admits that reviewed inventory with exact-plan retry after partial publication.
+`sync-import` combines fresh preview and application. Missing referenced or
+advertised objects are incomplete transfers; changed committed bytes or an
+invalid graph are integrity errors. Partial merge with missing witnessed
+operations blocks content reads, including policy-dependent delivery.
 
-Four client proposal formats remain available read-only. Workspace setup can preview or merge the memory server entry and packaged skill, with local backups, conflict refusal and rollback attempts if a write fails. The skill guides a short interview, source-note capture, a chosen task and readback. Setup choices remain disabled; a separate owner CLI command can use explicitly configured Jev/Laya shadow assessment. Actual SDK subprocesses exercise the emitted argv for each format and project/personal mode. This is not native client acceptance.
+An unknown branch omitted with its witnesses cannot be detected by a raw copy.
+The format is not a consensus protocol or authenticated history. Bundles contain
+all vault scopes for same-owner replication, unlike scoped Markdown exports.
+No background transport is installed.
 
-The owner CLI can export a selected scope to a new Markdown snapshot folder, with a linked Home page and optional history. It refuses existing destinations, canonical-vault nesting and link/junction paths, filters inaccessible dependencies and marks interrupted exports incomplete. This is a readable snapshot, not editable-note synchronization; changes to exported files never write back into canonical memory.
+Existing v1 vaults remain readable/writable without automatic conversion.
+`migrate-plan` and `migrate-apply` provide previewed, out-of-place conversion
+with an untouched original and verified byte backup. Interrupted artifacts are
+retained and marked; another attempt uses fresh paths. Rollback means selecting
+the original or verified backup, which lacks later v2-only contributions.
+See [MULTI-MACHINE.md](MULTI-MACHINE.md).
 
-Markdown import previews a bounded source folder, records content hashes and exclusions, and applies explicit source records to a separate initialized vault. Existing notes are never edited. Repeat plans reuse IDs; source changes produce revision-checked corrections. Batches are not atomic: inspect the returned complete/partial status and completed IDs before retrying.
+## Local tools and interfaces
 
-The read-only setup-check command checks the selected configuration, packaged skill, isolated Python import and vault doctor. A ready report covers local files/runtime only; native trust and real client acceptance remain pending.
+The core retains source-linked records, corrections, history and explicit
+personal/shared/project/session scopes. Retrieval validates sources, filters
+scope/disclosure/dependencies, and uses lexical FTS passages, aliases and history.
+Context packets have declared UTF-8 byte budgets, eligible conflict bundles and
+omission notices. This is not universal semantic recall.
 
-Optional advisor assessment is exposed through the owner CLI, not automatic MCP calls. It reports separate relevance advice from a hosted Jev endpoint or loopback Laya. Request previews do not send data or read credentials. Remote query approval, record/source egress checks, bounded transport and source freshness checks guard the explicit call. Tests use synthetic protocol responses; no live provider quality claim is made.
+The owner CLI and optional SDK stdio MCP server share the core. MCP selection
+is fixed at launch. Heads/resolution/retraction tools retain ownership and
+source-scope checks; a project server cannot edit a granted personal record or
+grant itself access. CLI subprocess and SDK protocol tests exercise interfaces;
+native client behavior is separate acceptance.
 
-The scoped overview provides metadata-only navigation for active/proposed records, counts by kind/state, and exact structured source/backlinks. It is available through CLI and fixed-selection MCP. Counts cover the admitted selection; record/link limits report omissions. No task completion or semantic relationship is inferred.
+Scoped overview provides metadata navigation and structured source/backlinks.
+Markdown working copies preview title/body changes and apply guarded corrections.
+Multi-head lineages require explicit resolution. Working folders are not
+automatically refreshed. Import previews external Markdown and copies selected
+source records without editing originals. Import/edit batches can be partial
+and report their admitted progress.
 
-Explicit Markdown authoring can open a new separate working folder, preview title/body edits and apply expected-revision corrections. It checks current source/scope policy against a snapshot inside the core writer lock. Workspaces remain unchanged after apply; historical receipts make identical retries idempotent. Batches can be partial, and inherited source references/grants are not automatically moved to successors. See [WORKING-NOTES.md](WORKING-NOTES.md).
+Scoped Markdown export creates a new readable snapshot with completion markers.
+Exported edits do not update canonical memory. Workspace setup previews/applies
+client configuration and the packaged interview/readback skill while preserving
+unrelated settings. `setup-check` inspects local readiness.
 
-## Storage boundaries
+Configured Jev/Laya shadow assessment remains an explicit owner CLI path separate
+from recall. Preview does not send a request or read credentials. Advice does not
+write memory or change baseline result order. Protocol fixtures do not establish
+live provider readiness or judgment quality.
 
-- Canonical revision files are under `.remember/revisions/`, with immutable operations and `head.json` as a durable high-water reference. They are human-readable, but not an ordinary freely editable Obsidian workspace yet.
-- The alpha deliberately refuses initialization into a populated unrelated directory. It does not silently import or reorganize an existing vault.
-- Editing a committed revision is reported as an integrity error. Use a separate working copy for supported title/body corrections; automatic materialized-note refresh and the full reconciliation workflow in VAULT.md remain unimplemented.
-- Writer locks are in a stable `.remember-dammit-locks` directory beside the canonical vault root. This avoids different harness TEMP environments creating different locks and requires write access to the vault's parent. Locks are not portable memory and must not be synchronized.
-- Tests cover process death around file flush/rename publication boundaries, not every possible power failure or filesystem failure mode. Windows lacks a portable directory-fsync operation here.
-- Coordinated rollback of both the journal and its head checkpoint cannot be detected from those rolled-back files alone. This is integrity checking, not tamper-proof storage against someone controlling all local files.
-- Snapshots are observed points in time. A revocation after the last delivery check cannot retract text already delivered to a client.
-- No migration is provided for earlier private scratch formats from this development session. The initial distributed alpha format requires `head.json`.
+## Local state and preservation
 
-## Not implemented
+Locks, optional indexes and transfer staging use stable OS-user local state
+outside portable content: Windows Local AppData, macOS Application Support,
+or Linux `~/.local/state`. Environment-selected temp/cache paths do not create
+separate lock authorities. Unsafe links and content-parent overlap are refused.
+The advisory lock does not coordinate separate machines or OS users.
 
-In-place vault adoption, automatic working-note refresh/text merge, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, result-changing advisor modes, automatic MCP advisor calls, and a visual vault manager.
+Canonical revisions are immutable; use working copies for supported Markdown
+edits. Doctor reports conflicts, missing/changed committed content, orphan
+payloads and pending files without deleting them. Tests exercise selected
+process-death/publication boundaries, not every power-loss/filesystem mode;
+Windows has no portable directory-fsync implementation here. Snapshots are
+observations: revocation cannot retract text already delivered to a client.
 
-Independent `session:<id>` records can be written by the owner CLI; project agents can save separate session-kind records in their bound project. MCP cannot select an arbitrary session scope. No automatic session card loading is claimed.
+## Remaining work and verification limits
 
-## Verification scope
+Automatic editor refresh/text merge, background sync, automatic client
+hooks/capture, embeddings, semantic extraction, passage-bound claim validation,
+automatic downgrade/restore and history purging are outside this release. Owner
+session records are explicit; MCP does not select arbitrary session scopes.
 
-Local execution is on Windows with Python 3.12.14, PyYAML 6.0.3 and MCP SDK 2.3.0. Tests use real temporary vaults, cross-process writers, interrupted commits, and actual stdio SDK clients. A missing Python 3.12-only pathlib method is simulated; it is not a native Python 3.11 run.
+Local synthetic checks have been exercised on Windows. Those runs do not
+establish cross-platform behavior. CI configuration targets Windows, macOS and
+Linux with Python 3.11/3.12; consult actual results for the published commit.
+Native Claude Code, Codex, Cursor and Antigravity acceptance and live sync-client
+trials remain untested for this release. No live personal vault migration is claimed.
 
-CI is configured for Windows, macOS and Linux on Python 3.11/3.12. Consult the [Actions results](https://github.com/Grit-77/remember-dammit/actions/workflows/test.yml) for the result on a specific commit; a configured matrix alone is not platform verification. No claim of a passing native Claude Code/Codex/Cursor/Antigravity matrix is made.
+From an installed checkout:
 
-Run `python -m unittest discover -s tests -v` from the installed checkout to obtain the current result. Failure-injection cases intentionally exercise errors; recorded success must include the command's actual exit status.
+```sh
+python -m unittest discover -s tests -v
+```
+
+See [FACTS.md](../FACTS.md) for receipts and
+[CI results](https://github.com/Grit-77/remember-dammit/actions/workflows/test.yml)
+for actual jobs. This page intentionally gives no current test total.

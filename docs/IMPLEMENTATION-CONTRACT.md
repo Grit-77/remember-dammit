@@ -1,3 +1,5 @@
+> Historical foundation contract, extended by the implemented [format-2 multi-machine contract](MULTI-MACHINE.md). New vaults use causal operations; v1 remains explicitly supported for legacy reads/writes.
+
 # Foundation implementation contract
 
 Working internal API for 0.1.0a1. The public design remains broader; unsupported features must be labeled.
@@ -60,3 +62,9 @@ MCP optional extra: official Python SDK, local stdio only. Shared core calls, bo
 - Manager: packaging, shared errors, retrieval, retrieval/end-to-end tests, documentation reconciliation, review and release decisions.
 
 Everyone preserves others' changes. Standard test command: `python -m unittest discover -s tests -v`. Record focused red/green evidence and then run the complete suite when dependencies are available.
+
+## Format-2 interface additions
+
+`heads(record_id)` returns all projected lineage leaves, including retracted leaves. `resolve` and `delete`/`retract` require the exact `expected_heads` ID/revision set. Resolution has multiple predecessors; history is causal/deterministic, not wall-clock order. CLI exposes `heads`, `resolve`, `retract`, `sync-export`, `sync-import`, `sync-plan`, `sync-apply`, `migrate-plan`, `migrate-apply`, and `migrate-status`. Scoped MCP exposes heads/resolve/retract only; transport, migration and grant administration stay owner-side.
+
+Immutable transport duplicates are idempotent. Distinct receipts reusing the same operation ID are reported as a conflict rather than silently selecting one. Native-profile machine-local locks serialize processes on one host; they are not distributed locks.

@@ -187,3 +187,9 @@ report = setup_workspace(
 On apply, the report describes `configured` or `unchanged` local files. A
 `VaultError` has a stable error code; write failures may attach an `evidence`
 dictionary with rollback results and the machine-local receipt path.
+
+## Using the same memory on multiple machines
+
+Install the runtime separately on each machine. Initialize one format-2 vault, then copy that vault identity and its immutable files to the other machines; do not initialize unrelated vaults and expect them to merge. Choose the local absolute vault/interpreter paths separately in each workspace configuration. Claude and Codex may use the same local vault with their own fixed project selections.
+
+Follow [MULTI-MACHINE.md](MULTI-MACHINE.md) for reviewed transfer bundles, exact-head conflict resolution, machine-local state, and previewed legacy migration. Stop old clients before migration; keep the original and backup until the new copy has been checked. Runtime setup does not migrate existing data or enable a synchronization service.

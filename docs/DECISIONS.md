@@ -30,10 +30,14 @@ The initial brief limited the product to a project-local correction ledger targe
 
 ## Open engineering choices
 
-- Final storage schema and transaction protocol, validated against VAULT.md failure cases.
+- Future schema evolution beyond the implemented format-2 causal operation DAG.
 - Further packaging routes and dependency changes beyond the current source installation.
 - Exact native automation per installed harness surface.
 - Retrieval fixtures and evaluation thresholds, provider performance/cost observations, and supported synchronization paths.
 - Future packaged releases beyond the current Apache-2.0-licensed source alpha.
 
 Approved requirements are not evidence that proposed behavior is implemented or tested. No optional provider has been enabled or called by this design work.
+
+## Offline replication decision
+
+Format 2 uses immutable hash-addressed operations with explicit causal parents. This represents independent offline writes without a shared sequence allocator or mandatory service/library. Record heads remain plural until an explicit resolution observes the exact current set. Tombstones and causal revoke-wins policy prevent old replicas from restoring removed access. See [MULTI-MACHINE.md](MULTI-MACHINE.md) for the implemented limits and migration procedure.
