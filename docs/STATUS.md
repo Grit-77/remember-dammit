@@ -1,6 +1,6 @@
 # Source alpha status
 
-Version 0.1.0a1, 2026-10-10. This document separates current implementation from the broader architecture proposals.
+Version 0.1.0a2, 2026-10-10. This document separates current implementation from the broader architecture proposals.
 
 ## Implemented
 
@@ -10,9 +10,11 @@ Retrieval validates canonical records, applies scope/disclosure/dependency rules
 
 The CLI and optional official-SDK MCP server invoke the same core. Project MCP servers have a fixed scope, cannot grant access, and cannot edit a granted personal record. Scope/source checks traverse dependencies and recheck the observed snapshot before returning. The context budget covers the canonical packet and its model-facing MCP text; protocol envelope overhead and client prompt overhead are outside that budget.
 
-Four client proposal formats and a shared explicit-memory skill are generated read-only. Actual SDK subprocesses exercise the emitted argv for each format and project/personal mode. This is not native client acceptance.
+Four client proposal formats remain available read-only. Workspace setup can preview or merge the memory server entry and packaged skill, with local backups, conflict refusal and rollback attempts if a write fails. The skill guides a short interview, source-note capture, a chosen task and readback. Advisor choices remain disabled until connectors exist. Actual SDK subprocesses exercise the emitted argv for each format and project/personal mode. This is not native client acceptance.
 
 The owner CLI can export a selected scope to a new Markdown snapshot folder, with a linked Home page and optional history. It refuses existing destinations, canonical-vault nesting and link/junction paths, filters inaccessible dependencies and marks interrupted exports incomplete. This is a readable snapshot, not editable-note synchronization; changes to exported files never write back into canonical memory.
+
+Markdown import previews a bounded source folder, records content hashes and exclusions, and applies explicit source records to a separate initialized vault. Existing notes are never edited. Repeat plans reuse IDs; source changes produce revision-checked corrections. Batches are not atomic: inspect the returned complete/partial status and completed IDs before retrying.
 
 ## Storage boundaries
 
@@ -27,7 +29,7 @@ The owner CLI can export a selected scope to a new Markdown snapshot folder, wit
 
 ## Not implemented
 
-Existing-vault adoption, editable-note reconciliation, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, Jev/Laya connectors, and a visual vault manager.
+In-place vault adoption and editable-note reconciliation, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, Jev/Laya connectors, and a visual vault manager.
 
 Independent `session:<id>` records can be written by the owner CLI; project agents can save separate session-kind records in their bound project. MCP cannot select an arbitrary session scope. No automatic session card loading is claimed.
 

@@ -1,11 +1,13 @@
 # Install the source alpha
 
-This is a runnable **0.1.0a1 source alpha**. Its CLI, local stdio MCP server and
+This is a runnable **0.1.0a2 source alpha**. Its CLI, local stdio MCP server and
 configuration proposal generator share one local vault. The four named clients
 are integration targets: Claude Code, Codex, Cursor and Google Antigravity still
 need real-client acceptance. Every generated proposal says `tested_live: false`.
 Parsed configuration and SDK subprocess checks do not establish that a client
 loaded the server, followed the skill or recalled memory in a fresh session.
+
+For the guided repository-link workflow, start with [AGENT-SETUP.md](AGENT-SETUP.md). It includes optional advisor selection and a first-use interview. The commands below also support manual setup.
 
 ## Prepare a local environment
 
@@ -97,7 +99,7 @@ need an initialized vault. Installing a proposal does not initialize one.
 
 To uninstall, remove only the server entry and skill file you added, refresh the
 client, and restore your backup if necessary. Keep the vault unless you explicitly
-intend to delete your memory. Installation and uninstall are manual in this alpha.
+intend to delete your memory. The workspace setup helper can install the configuration and skill; uninstall remains manual.
 
 ## Browse a Markdown snapshot
 
@@ -139,3 +141,20 @@ Finalization checks the snapshot and removes the incomplete marker under the
 vault's cooperating writer lock; the vault parent needs access for that local
 lock directory. A revocation after this completion point cannot retract bytes
 already exported. Arbitrary external editors do not participate in the lock.
+
+## Import existing Markdown
+
+Keep the original folder and the new canonical vault separate. Preview before applying:
+
+```powershell
+.venv/Scripts/python.exe -m remember_dammit --vault "C:/Memory Vault" import-plan --source "C:/Existing Notes" --collection notes --scope project:demo | Set-Content -Encoding utf8NoBOM .local/import-plan.json
+.venv/Scripts/python.exe -m remember_dammit --vault "C:/Memory Vault" import-apply --plan .local/import-plan.json
+```
+
+This PowerShell 7 example assumes `.local` already exists. Inspect the JSON preview's files, exclusions, scope and actions before applying. On another shell, save stdout as UTF-8 without a BOM. The plan contains local paths: keep it private. You may omit `--vault` for a source-only preview before initializing a target.
+
+Imports store UTF-8 Markdown as private source-excerpt records; frontmatter remains source text and cannot grant access. Hidden/system folders, links/junctions, invalid UTF-8 and nonportable paths are excluded. Limits are 1 MiB per file, 16 MiB admitted content, 1,000 files and 10,000 scanned entries. Split larger collections explicitly.
+
+Generate a fresh plan against the target for changed files. The same collection, scope and relative path retain one record ID; changes use corrections. A repeated unchanged plan is idempotent. Removed source files do not delete imported memory. This is copy-in adoption, not two-way synchronization.
+
+Application rechecks source content and expected target revisions. A batch can report `status: partial`; check `completed`, `failed_index` and the error before retrying. Completed records remain in the vault. Never equate process exit alone with a completed import.
