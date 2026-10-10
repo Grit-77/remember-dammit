@@ -27,8 +27,8 @@ def _write_fields(parser):
 
 
 def build_parser():
-    parser = JsonArgumentParser(prog="remember-dammit", description="Local source-linked memory. No provider calls.")
-    parser.add_argument("--vault", help="Explicit local vault directory (optional for import-plan)")
+    parser = JsonArgumentParser(prog="remember-dammit", description="Local source-linked memory with explicit optional advisory assessment.")
+    parser.add_argument("--vault", help="Explicit local vault directory (optional for import-plan and advisor-template)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize a vault without overwriting existing content")
     remember = commands.add_parser("remember", help="Write a memory")
@@ -85,6 +85,25 @@ def build_parser():
     setup.add_argument("--python-executable", default=sys.executable)
     setup.add_argument("--advisor", choices=["none", "jev", "laya"], default="none")
     setup.add_argument("--apply", action="store_true", help="Apply workspace configuration; otherwise preview only")
+    check = commands.add_parser("setup-check", help="Inspect workspace installation without changing files")
+    check.add_argument("harness", choices=["claude", "codex", "cursor", "antigravity"])
+    _selection(check)
+    check.add_argument("--workspace", required=True)
+    check.add_argument("--python-executable", default=sys.executable)
+    template = commands.add_parser("advisor-template", help="Print provider configuration; disabled unless shadow mode is selected")
+    template.add_argument("provider", choices=["jev", "laya"])
+    template.add_argument("--model", required=True)
+    template.add_argument("--endpoint")
+    template.add_argument("--api-key-env")
+    template.add_argument("--mode", choices=["off", "shadow"], default="off")
+    assess = commands.add_parser("assess", help="Assess scoped recall separately, without changing memory or result order")
+    assess.add_argument("query")
+    _selection(assess)
+    assess.add_argument("--audience", choices=["private", "shared", "public"], default="private")
+    assess.add_argument("--limit", type=int, default=5)
+    assess.add_argument("--advisor-config")
+    assess.add_argument("--allow-remote-query", action="store_true")
+    assess.add_argument("--preview", action="store_true", help="Show eligible outbound requests without sending them or reading credentials")
     return parser
 
 
@@ -105,13 +124,33 @@ def _emit(value, *, packet=False):
 def main(argv=None):
     try:
         args = build_parser().parse_args(argv)
-        if args.command != "import-plan" and args.vault is None:
+        if args.command not in {"import-plan", "advisor-template"} and args.vault is None:
             raise VaultError("invalid_arguments", "An explicit --vault is required; use --help for usage.")
-        if args.command == "import-plan":
+        if args.command == "advisor-template":
+            from .advisors import validate_config
+            config = {"schema": 1, "provider": args.provider, "mode": args.mode,
+                      "model": args.model, "timeout_seconds": 5, "max_candidates": 3,
+                      "endpoint": args.endpoint or ("https://api.typesafe.ai/v1/systemone" if args.provider == "jev" else "http://127.0.0.1:8765/v1/systemone")}
+            if args.api_key_env is not None or args.provider == "jev":
+                config["api_key_env"] = args.api_key_env or "TYPESAFE_API_KEY"
+            result = validate_config(config)
+        elif args.command == "assess":
+            from .advisors import assess, load_config
+            from .storage import Vault
+            config = load_config(args.advisor_config, args.vault) if args.advisor_config else None
+            result = assess(Vault(args.vault), args.query, project=args.project, personal=args.personal,
+                            audience=args.audience, config=config, allow_remote_query=args.allow_remote_query,
+                            preview=args.preview, limit=args.limit)
+        elif args.command == "import-plan":
             from .importing import plan_import
             from .storage import Vault
             result = plan_import(args.source, collection=args.collection, scope=args.scope,
                                  vault=Vault(args.vault) if args.vault is not None else None)
+        elif args.command == "setup-check":
+            from .diagnostics import inspect_workspace
+            result = inspect_workspace(args.workspace, args.harness, vault_path=args.vault,
+                                       project=args.project, personal=args.personal,
+                                       python_executable=args.python_executable)
         elif args.command == "setup":
             from .setup import setup_workspace
             result = setup_workspace(args.workspace, args.harness, vault_path=args.vault,

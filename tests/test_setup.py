@@ -127,10 +127,10 @@ class SetupTests(unittest.TestCase):
                     self.setup(**({"dry_run": False} | options))
                 self.assertEqual(self.snapshot(), before)
 
-    def test_advisors_are_explicit_pending_choices_and_personal_is_scoped(self):
+    def test_advisors_offer_shadow_connector_without_enabling_it(self):
         for choice in ("none", "jev", "laya"):
             result = self.setup(project=None, personal=True, advisor=choice)
-            self.assertEqual(result["advisor"], {"choice": choice, "choice_confirmed": False, "enabled": False, "setup_status": "disabled" if choice == "none" else "pending"})
+            self.assertEqual(result["advisor"], {"choice": choice, "choice_confirmed": False, "enabled": False, "connector_available": choice != "none", "setup_status": "disabled" if choice == "none" else "not_configured"})
 
     def test_late_write_failure_rolls_back_earlier_file_with_receipt(self):
         module = importlib.import_module("remember_dammit.setup")

@@ -242,12 +242,14 @@ def setup_workspace(workspace, harness, *, vault_path, project=None, personal=Fa
         "workspace": str(workspace), "harness": harness, "vault_path": str(vault_path),
         "selection": {"project": project, "personal": personal},
         "python_executable": str(executable), "tested_live": False,
-        "advisor": {"choice": advisor, "choice_confirmed": False, "enabled": False, "setup_status": "disabled" if advisor == "none" else "pending"},
+        "advisor": {"choice": advisor, "choice_confirmed": False, "enabled": False,
+                    "connector_available": advisor != "none",
+                    "setup_status": "disabled" if advisor == "none" else "not_configured"},
         "changes": [], "receipt": None,
         "next_steps": [
             "Reload the chosen client and complete its native workspace trust and MCP approvals. Inspect its server list and tool schemas.",
             "Ask short onboarding questions, save approved answers as source-linked notes, create the requested task, and read the notes and task back.",
-            "Core memory is local. Optional Jev/Laya connectors are pending and disabled; a recorded choice does not enable billing or a provider.",
+            "Core memory is local. Optional Jev/Laya shadow assessment is available through the assess CLI with separate configuration; a recorded choice does not enable billing or a provider. Follow docs/PROVIDERS.md.",
         ],
     }
     changed = []
