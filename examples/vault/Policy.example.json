@@ -1,0 +1,15 @@
+{
+  "example_only": true,
+  "schema_status": "proposed-not-implemented",
+  "vault_id": "synthetic-demo-vault",
+  "default_personal_sharing": "deny",
+  "default_remote_advice": "deny",
+  "grants": [
+    {
+      "project_id": "atlas",
+      "record_ids": ["preference-writing-001"],
+      "destinations": ["agent-context"],
+      "revision_policy": "current-admitted-revisions-of-named-id"
+    }
+  ]
+}
