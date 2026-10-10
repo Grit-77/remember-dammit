@@ -72,6 +72,14 @@ class ImportCommandTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['error']['code'], 'invalid_source')
         self.assertEqual((self.source / 'a.md').read_bytes(), before)
 
+    def test_recursion_depth_plan_returns_json_without_traceback(self):
+        self.assertEqual(self.run_cli('--vault', str(self.target), 'init').returncode, 0)
+        self.plan_file.write_bytes(b'[' * 10000 + b']' * 10000)
+        result = self.apply()
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(json.loads(result.stdout)['error']['code'], 'invalid_plan')
+        self.assertEqual(result.stderr, b'')
+
 
 if __name__ == '__main__':
     unittest.main()

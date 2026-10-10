@@ -140,7 +140,7 @@ def main(argv=None):
                         if len(payload) > MAX_PLAN_BYTES:
                             raise ValueError
                         plan = json.loads(payload.decode("utf-8"))
-                    except (OSError, ValueError, UnicodeError):
+                    except (OSError, ValueError, UnicodeError, RecursionError):
                         raise VaultError("invalid_plan", "Specify a readable, bounded import JSON preview.") from None
                     result = apply_import(vault, plan)
                 else:

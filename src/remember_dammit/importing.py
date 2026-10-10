@@ -274,7 +274,7 @@ def _validate(plan):
                     raise ValueError
                 validate_identifier(item['expected']['id'], 'Record ID')
         return plan
-    except (KeyError, TypeError, ValueError, UnicodeError, VaultError):
+    except (KeyError, TypeError, ValueError, UnicodeError, RecursionError, VaultError):
         raise VaultError('invalid_plan', 'Import plan is invalid; generate a fresh preview.') from None
 
 

@@ -252,6 +252,18 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 'invalid_plan')
         self.assertEqual(self.vault.list_records(), [])
 
+    def test_recursion_depth_plan_raises_structured_error_before_writes(self):
+        (self.source / 'a.md').write_text('Original', encoding='utf-8')
+        plan = self.plan()
+        nested = []
+        for _ in range(10000):
+            nested = [nested]
+        plan['files'] = nested
+        with self.assertRaises(VaultError) as caught:
+            self.apply(plan)
+        self.assertEqual(caught.exception.code, 'invalid_plan')
+        self.assertEqual(self.vault.list_records(), [])
+
     def test_target_preflight_refuses_late_conflict_before_writing_first_file(self):
         (self.source / 'a.md').write_text('First', encoding='utf-8')
         (self.source / 'b.md').write_text('Second', encoding='utf-8')
