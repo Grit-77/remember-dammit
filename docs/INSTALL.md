@@ -1,6 +1,6 @@
 # Install the source alpha
 
-This is a runnable **0.1.0a3 source alpha**. Its CLI, local stdio MCP server and
+This is a runnable **0.1.0a4 source alpha**. Its CLI, local stdio MCP server and
 configuration proposal generator share one local vault. The four named clients
 are integration targets: Claude Code, Codex, Cursor and Google Antigravity still
 need real-client acceptance. Every generated proposal says `tested_live: false`.
@@ -168,3 +168,7 @@ Run the following with the installed interpreter and the same selection used at 
 ```
 
 Replace the client and paths as needed. The JSON report checks configuration, packaged skill, runtime imports and vault integrity without applying repairs. Inspect its ready/status and per-check codes: process exit zero means the report was produced, not that the installation is ready. Resolve conflicting owner files manually. Native client trust, tool approval and a real save/readback remain separate checks. Optional advisor setup is documented in [PROVIDERS.md](PROVIDERS.md).
+
+## Navigate and edit notes
+
+Use the CLI or MCP `overview` to browse the selected vault without a query. For deliberate Markdown edits, follow [WORKING-NOTES.md](WORKING-NOTES.md). The `edit-open`, `edit-plan` and `edit-apply` commands keep authoring files separate from immutable revisions, preview corrections and refuse stale heads. They do not install file watchers or synchronize an editor automatically.

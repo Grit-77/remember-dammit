@@ -1,10 +1,13 @@
 # Publication facts
 
-Implementation reviewed: `e3830bc` — source alpha 0.1.0a3, 2026-10-10. Initial core reviewed at `c8e4b2c`; Markdown import reviewed at `e429bb3` plus `2aacc9e`; workspace setup at `1a58324`. Diagnostics and optional shadow assessment are covered by the checks below; consult per-commit CI for the published tree. Run commands from this checkout in an environment installed with `python -m pip install -e ".[mcp]"`.
+Implementation reviewed: `9cc5b7e` — source alpha 0.1.0a4, 2026-10-10. Initial core reviewed at `c8e4b2c`; Markdown import reviewed at `e429bb3` plus `2aacc9e`; workspace setup at `1a58324`; diagnostics and optional shadow assessment at `e3830bc`. Vault navigation and authoring are covered by the checks below; consult per-commit CI for the published tree. Run commands from this checkout in an environment installed with `python -m pip install -e ".[mcp]"`.
 
 | Public statement | Receipt | Scope and limits |
 | --- | --- | --- |
 | Local Markdown records, corrections, grants and history | `python -m unittest discover -s tests -p test_storage.py -v`; `src/remember_dammit/storage.py` | Real temporary vaults and participating-process operations; not a freely editable Obsidian workspace. |
+| Scoped queryless overview, task/proposal counts and source backlinks | `python -m unittest discover -s tests -p test_overview.py -v`; `test_mcp.py`; `test_cli_vault.py` | Exact structured source links, active/proposed selection and omission counts. No semantic linking, task-completion inference or universal byte-budget claim. |
+| Markdown title/body editing through reviewed working copies | `python -m unittest discover -s tests -p test_editing.py -v`; `test_cli_vault.py`; `src/remember_dammit/editing.py` | Temporary vault roundtrip, immutable predecessors, stale-head conflicts, policy checks, untrusted metadata, exact receipts and partial recovery; no automatic workspace refresh or text merge. |
+| Atomic snapshot precondition for a new correction | `python -m unittest discover -s tests -p 'test_storage*.py' -v`; `Vault.correct` | Snapshot checked inside the writer lock; exact operation replay still acknowledges its historical result. This does not make a multi-record batch atomic. |
 | Scoped lexical passages, corrections, citations and byte-budgeted packets | `python -m unittest discover -s tests -p test_retrieval.py -v`; `test_workflow.py` | Lexical fixtures, explicit scopes, selected source dependencies; not universal semantic recall. |
 | CLI and local stdio MCP share the core | `python -m unittest discover -s tests -p test_cli.py -v`; `test_mcp.py` | Real CLI and SDK subprocesses, not native model/IDE acceptance. |
 | Four client configuration proposals | `python -m unittest discover -s tests -p test_integrations.py -v`; `src/remember_dammit/integrations.py` | Parsed JSON/TOML, literal argument handling and emitted-command launches. Each proposal says `tested_live: false`. |
@@ -38,3 +41,4 @@ The repository's detailed architecture documents are proposals. Their planned ca
 - Added workspace setup, the packaged interview/readback skill, and explicit pending advisor choices at `1a58324`; commands are covered by setup and CLI tests.
 - Added reviewed Markdown import at `cab0fc0` and `ac11b02`; removed its previous unimplemented label while retaining the editor-sync limit.
 - Added read-only setup diagnostics and opt-in shadow advisor adapters; replaced the unavailable-connector label with the actual CLI scope and retained live-provider verification limits.
+- Added scoped navigation and explicit working-note corrections. Kept canonical revisions immutable, preserved source/grant identity semantics and documented the new-folder-per-editing-round limit.

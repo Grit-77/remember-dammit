@@ -4,7 +4,7 @@
 
 Local, source-linked memory shared by your AI agents.
 
-> **Source alpha · 0.1.0a3.** A working local engine, CLI and stdio MCP server. Workspace setup is provided for Claude Code, Codex, Cursor and Antigravity. Their actual native-client acceptance is still pending; no automatic hooks are installed.
+> **Source alpha · 0.1.0a4.** A working local engine, CLI and stdio MCP server. Workspace setup is provided for Claude Code, Codex, Cursor and Antigravity. Their actual native-client acceptance is still pending; no automatic hooks are installed.
 
 A new session should not mean explaining the same decision again. Save what matters, correct it when it changes, and inspect the history behind the current answer.
 
@@ -38,6 +38,8 @@ See [installation and client configuration](docs/INSTALL.md) for explicit Window
 
 ## What works in this alpha
 
+- **Vault overview.** Browse scoped notes, tasks, proposed records and exact source backlinks through CLI or MCP, without needing a search phrase.
+- **Editable working notes.** Open a separate Markdown working copy, preview title/body changes and apply revision-checked corrections. Originals remain in history; concurrent edits become visible conflicts.
 - **Readable Markdown with immutable history.** Source-linked notes, decisions, preferences and session records share stable IDs.
 - **Explicit scope.** Personal, shared and project knowledge are distinct. A personal note reaches a project only through a specific grant.
 - **Corrections that preserve history.** Expected revisions prevent silent competing updates; former terminology can find the current decision.
@@ -52,6 +54,10 @@ See [installation and client configuration](docs/INSTALL.md) for explicit Window
 - **Browsable snapshots.** Export a selected scope into a new Markdown folder with a Home page, source links and optional history. Exported edits do not update live memory.
 
 The optional on-disk SQLite projection is disposable. Current search validates source records and builds its scoped FTS index in memory; large-vault performance has not been benchmarked.
+
+## Work with your notes
+
+Ask your agent to show the vault overview, inspect a task and follow its sources. For editing in a Markdown editor, use the [working notes guide](docs/WORKING-NOTES.md): open a new working folder, edit a title or body, preview, apply and read back. This is an explicit editing roundtrip; working folders do not synchronize automatically.
 
 ## One vault, many clients
 
@@ -69,7 +75,7 @@ Generated configurations have been exercised with an SDK stdio client. That esta
 
 A full personal second brain: preferences, inbox, original sources, connected knowledge, projects, independent session cards and reviewable history. Browse the [illustrative vault](examples/vault/Home.md) for the intended organization.
 
-Native editor reconciliation, offline multi-machine synchronization, semantic embeddings, automatic hooks, and automatic or result-changing advisor modes are **not implemented yet**. The alpha initializes a separate empty vault and can import Markdown copies through a reviewed plan. It treats direct edits to committed revision payloads as integrity errors. Optional shadow adapters assess bounded candidates; live provider readiness and answer quality have not been established by the protocol tests.
+Automatic editor refresh/merge, offline multi-machine synchronization, semantic embeddings, automatic hooks, and automatic or result-changing advisor modes are **not implemented yet**. The alpha initializes a separate empty vault and can import Markdown copies through a reviewed plan. It treats direct edits to committed revision payloads as integrity errors. Optional shadow adapters assess bounded candidates; live provider readiness and answer quality have not been established by the protocol tests.
 
 ## Read more
 

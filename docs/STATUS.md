@@ -1,6 +1,6 @@
 # Source alpha status
 
-Version 0.1.0a3, 2026-10-10. This document separates current implementation from the broader architecture proposals.
+Version 0.1.0a4, 2026-10-10. This document separates current implementation from the broader architecture proposals.
 
 ## Implemented
 
@@ -20,11 +20,15 @@ The read-only setup-check command checks the selected configuration, packaged sk
 
 Optional advisor assessment is exposed through the owner CLI, not automatic MCP calls. It reports separate relevance advice from a hosted Jev endpoint or loopback Laya. Request previews do not send data or read credentials. Remote query approval, record/source egress checks, bounded transport and source freshness checks guard the explicit call. Tests use synthetic protocol responses; no live provider quality claim is made.
 
+The scoped overview provides metadata-only navigation for active/proposed records, counts by kind/state, and exact structured source/backlinks. It is available through CLI and fixed-selection MCP. Counts cover the admitted selection; record/link limits report omissions. No task completion or semantic relationship is inferred.
+
+Explicit Markdown authoring can open a new separate working folder, preview title/body edits and apply expected-revision corrections. It checks current source/scope policy against a snapshot inside the core writer lock. Workspaces remain unchanged after apply; historical receipts make identical retries idempotent. Batches can be partial, and inherited source references/grants are not automatically moved to successors. See [WORKING-NOTES.md](WORKING-NOTES.md).
+
 ## Storage boundaries
 
 - Canonical revision files are under `.remember/revisions/`, with immutable operations and `head.json` as a durable high-water reference. They are human-readable, but not an ordinary freely editable Obsidian workspace yet.
 - The alpha deliberately refuses initialization into a populated unrelated directory. It does not silently import or reorganize an existing vault.
-- Editing a committed revision is reported as an integrity error. The full proposal/reconciliation workflow in VAULT.md is not implemented.
+- Editing a committed revision is reported as an integrity error. Use a separate working copy for supported title/body corrections; automatic materialized-note refresh and the full reconciliation workflow in VAULT.md remain unimplemented.
 - Writer locks are in a stable `.remember-dammit-locks` directory beside the canonical vault root. This avoids different harness TEMP environments creating different locks and requires write access to the vault's parent. Locks are not portable memory and must not be synchronized.
 - Tests cover process death around file flush/rename publication boundaries, not every possible power failure or filesystem failure mode. Windows lacks a portable directory-fsync operation here.
 - Coordinated rollback of both the journal and its head checkpoint cannot be detected from those rolled-back files alone. This is integrity checking, not tamper-proof storage against someone controlling all local files.
@@ -33,7 +37,7 @@ Optional advisor assessment is exposed through the owner CLI, not automatic MCP 
 
 ## Not implemented
 
-In-place vault adoption and editable-note reconciliation, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, result-changing advisor modes, automatic MCP advisor calls, and a visual vault manager.
+In-place vault adoption, automatic working-note refresh/text merge, automated semantic extraction, passage-bound claim validation, automatic ambiguity detection, multi-machine conflict merge/sync, migrations and restore tooling, background capture, automatic client hooks, embedding providers, result-changing advisor modes, automatic MCP advisor calls, and a visual vault manager.
 
 Independent `session:<id>` records can be written by the owner CLI; project agents can save separate session-kind records in their bound project. MCP cannot select an arbitrary session scope. No automatic session card loading is claimed.
 
