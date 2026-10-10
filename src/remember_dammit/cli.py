@@ -28,7 +28,7 @@ def _write_fields(parser):
 
 def build_parser():
     parser = JsonArgumentParser(prog="remember-dammit", description="Local source-linked memory. No provider calls.")
-    parser.add_argument("--vault", required=True, help="Explicit local vault directory")
+    parser.add_argument("--vault", help="Explicit local vault directory (optional for import-plan)")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("init", help="Initialize a vault without overwriting existing content")
     remember = commands.add_parser("remember", help="Write a memory")
@@ -67,6 +67,12 @@ def build_parser():
     _selection(export)
     export.add_argument("--destination", required=True)
     export.add_argument("--include-history", action="store_true")
+    preview = commands.add_parser("import-plan", help="Preview a bounded read-only Markdown source import")
+    preview.add_argument("--source", required=True, help="Absolute source directory; never modified")
+    preview.add_argument("--collection", required=True)
+    preview.add_argument("--scope", required=True)
+    apply = commands.add_parser("import-apply", help="Apply an explicit import preview; retries use the same plan")
+    apply.add_argument("--plan", required=True, help="Local JSON preview file")
     _selection(commands.add_parser("mcp", help="Serve local stdio MCP bound to one selection"))
     integration = commands.add_parser("integration", help="Print a client configuration proposal")
     integration.add_argument("harness", choices=["claude", "codex", "cursor", "antigravity"])
@@ -92,7 +98,14 @@ def _emit(value, *, packet=False):
 def main(argv=None):
     try:
         args = build_parser().parse_args(argv)
-        if args.command == "integration":
+        if args.command != "import-plan" and args.vault is None:
+            raise VaultError("invalid_arguments", "An explicit --vault is required; use --help for usage.")
+        if args.command == "import-plan":
+            from .importing import plan_import
+            from .storage import Vault
+            result = plan_import(args.source, collection=args.collection, scope=args.scope,
+                                 vault=Vault(args.vault) if args.vault is not None else None)
+        elif args.command == "integration":
             from .integrations import render
             result = render(args.harness, vault_path=args.vault, project=args.project, personal=args.personal, python_executable=args.python_executable)
         else:
@@ -119,6 +132,17 @@ def main(argv=None):
                     from .exporting import export_snapshot
                     result = export_snapshot(vault, args.destination, project=args.project,
                                              personal=args.personal, include_history=args.include_history)
+                elif args.command == "import-apply":
+                    from .importing import apply_import, MAX_PLAN_BYTES
+                    try:
+                        with open(args.plan, "rb") as handle:
+                            payload = handle.read(MAX_PLAN_BYTES + 1)
+                        if len(payload) > MAX_PLAN_BYTES:
+                            raise ValueError
+                        plan = json.loads(payload.decode("utf-8"))
+                    except (OSError, ValueError, UnicodeError):
+                        raise VaultError("invalid_plan", "Specify a readable, bounded import JSON preview.") from None
+                    result = apply_import(vault, plan)
                 else:
                     from . import retrieval
                     if args.command == "reindex":
@@ -128,6 +152,8 @@ def main(argv=None):
                         operation = retrieval.search if args.command == "recall" else retrieval.context
                         result = operation(vault, args.query, **fields)
         _emit(result, packet=args.command == "context")
+        if args.command == "import-apply" and result["status"] == "partial":
+            return 1
         return 0
     except VaultError as exc:
         _emit({"error": {"code": exc.code, "message": exc.message}})
