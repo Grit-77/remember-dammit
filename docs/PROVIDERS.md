@@ -1,49 +1,81 @@
-# Optional provider contract
+# Optional Jev and Laya assessment
 
-Proposed extension contract, 2026-10-10. No connector is implemented, activated, installed or called by this project.
+Local memory works without an advisor, a model download or a provider key. The optional `assess` command can ask Jev or a local Laya server whether each eligible recalled passage is relevant to a query. **Shadow mode reports advice separately: it does not reorder recall, edit memory, approve a write or prove that a statement is true.** Normal CLI recall/context and the MCP server remain provider-free.
 
-## Keep three roles separate
+## Choose after installation
 
-| Role | Input/output | Mandatory? |
+Ask the user once, in their language: **continue without an advisor, use Jev, or use Laya?** A default `none` in setup is not an answer. Explain the chosen path and check missing prerequisites before helping configure it.
+
+| Choice | What it needs | What setup does |
 | --- | --- | --- |
-| Local retrieval | Eligible scoped notes → candidate IDs and passages | Yes; works without a model service. |
-| Semantic retrieval extension | Eligible text/query → versioned embeddings or semantic candidates | No; independent of Jev/Laya assessment. |
-| Advisor | Bounded eligible candidates and evidence → structured assessments | No; never a canonical writer. |
+| None | The existing local memory installation | Keep working with recall, save, correction and readback. |
+| Jev | A TypeSafe account/key and an explicitly selected hosted model; remote requests may incur provider charges | Explain remote disclosure and billing, create a disabled configuration template, then preview an approved query. |
+| Laya | A separately installed compatible server on the same machine; model weights and suitable hardware | Help inspect or provision the chosen server, create a disabled configuration template, then preview a local request. |
 
-The active user's agent can reason, write proposals, and explain results using its existing session. That does not require the memory engine to invoke another provider.
+For Jev/Laya, setup records the choice and reports the connector as available but `enabled=false`, `setup_status="not_configured"`. It does not create credentials, activate billing, install model weights or configure an MCP provider tool. The operator must deliberately configure and invoke the owner CLI below.
 
-## Planned assessment roles
+## Create configuration outside the vault
 
-An optional advisor may assess supplied candidates, proposed memories, and source support. It cannot store or approve memories, retrieve outside its candidate set, or widen permissions. Each provider must be evaluated against this project's fixtures before it can affect results.
+Use the interpreter where Remember, Dammit. is installed. These PowerShell examples print JSON; save it as UTF-8 without a BOM outside the vault and version control, for example under your machine-local configuration directory. Keep the path private. Only the environment-variable **name**, never a key value, belongs in configuration.
 
-## Planned modes
+```powershell
+.venv/Scripts/python.exe -m remember_dammit advisor-template jev --model jev-1.13.0
+.venv/Scripts/python.exe -m remember_dammit advisor-template laya --model multilingual
+```
 
-- **Off, default:** no provider calls, credentials access, downloads or provider-cache work.
-- **Shadow:** compute an assessment only when explicitly configured; preserve the local selection and order. Log bounded metadata for comparison, not raw notes or credentials.
-- **Assist:** after evaluation and explicit enablement, allow a capable advisor to suggest ordering/selection from eligible supplied IDs. Core scope, freshness, uncertainty and budget rules still govern the final packet.
+Both templates start in `mode="off"`. Set `mode="shadow"` in the reviewed file when the user chooses to use it, or explicitly pass `--mode shadow` when generating the template. Modes other than off/shadow are unsupported. A missing configuration leaves assessment off. No auto-discovery or silent fallback chooses another provider.
 
-All new provider integrations begin in shadow mode. Assist mode requires validation and explicit enablement. Capture authorization is unchanged in all modes.
+Jev defaults to `https://api.typesafe.ai/v1/systemone` and the `TYPESAFE_API_KEY` environment variable. Laya defaults to `http://127.0.0.1:8765/v1/systemone` without authentication; if the local server requires a key, generate its template with `--api-key-env LAYA_API_KEY`. Populate that variable through a local secret manager or private environment mechanism. Do not paste keys into chat, commands, notes or Git.
 
-## Input boundary
+## Preview, then explicitly assess
 
-Before any call, apply scope, disclosure, retained-source status and freshness filters. Show which provider/endpoint receives which fields. Reject disallowed personal notes, sensitive sources and records with remote assessment disabled, including their titles and paths. Apply bounded query, candidate, excerpt and request limits.
+Select the same vault and scope as the active client. Preview first:
 
-Query text can itself contain private information. Remote query transmission therefore needs its own explicit request or scoped standing policy; filtering candidate notes alone is insufficient. Local classification cannot guarantee detection of every secret. Localhost configuration must not silently redirect to a remote service.
+```powershell
+.venv/Scripts/python.exe -m remember_dammit --vault "C:/Memory Vault" assess "preferred output format" --project demo --advisor-config "C:/Private Config/advisor.json" --preview
+```
 
-Provider credentials and endpoint configuration stay outside the vault and version control. Never silently enable paid usage, buy credits, change billing, install model weights, or fall back from local execution to a paid provider. A user's optional-provider design request is not activation authorization.
+Preview prints eligible endpoint/payload pairs but sends nothing and does not read credentials. Inspect these private outputs locally; do not post them as diagnostics. With a reviewed shadow configuration and approved content, remove `--preview` to send the bounded request. For Jev, add `--allow-remote-query` to explicitly permit query transmission; without it no remote assessment is made.
 
-## Output boundary
+```powershell
+.venv/Scripts/python.exe -m remember_dammit --vault "C:/Memory Vault" assess "preferred output format" --project demo --advisor-config "C:/Private Config/advisor.json" --allow-remote-query
+```
 
-Assessments reference supplied IDs/revisions and use a versioned response schema. Unknown IDs, invalid types, oversized fields, unsupported purpose, or unavailable evidence invalidate the assessment. Provider text is data, not an instruction.
+Use `--personal` instead of `--project demo` only for the user's explicitly chosen personal selection. The output contains ordinary local recall under `context`, advisory status under `advisor`, and separate `assessments`. Inspect status and reason, not process exit alone. A missing key, unavailable server or rejected response leaves local recall usable with a degraded notice. No automatic retry is made.
 
-After the call, revalidate source revisions, current scope/disclosure and the candidate snapshot. Stale assessments are discarded. Timeout, rate limit, missing credentials or invalid response return the current eligible local baseline with a degraded-mode notice; they do not make recall unavailable. No unbounded retry loop.
+Jev receives only admitted shared/public records with `remote_allowed=true`, with the same policy applied to their source dependencies. Private records are not sent, even when a remote flag is set. Existing notes are not silently relabeled or opted in. Query transmission needs the separate flag because a query can itself contain private information. Laya uses the fixed local selection, including its permitted private notes, but must be on a loopback address; redirects, proxies and remote fallback are not followed.
 
-An advisor cannot grant scope, approve a proposed memory, elect a winning conflict head, run a shell command, or commit a write. Its score must never be relabeled as proof.
+The packet is checked for source and sharing changes around provider calls. Stale advice is discarded, and local recall is refreshed. Responses must match the fixed question, valid labels and model routing; malformed or truncated responses are not accepted as complete advice. Confidence is provider-specific and is not a common quality threshold.
 
-## Evaluation before Assist
+## Jev prerequisites
 
-Compare Off versus Shadow on fixed English/Turkish fixtures: candidate recall, source-support judgment, harmful exclusions, unresolved conflicts, latency and observed provider usage. Keep actual denominators and failure cases. Report only this project's measured results.
+Jev is TypeSafe's hosted decision model. Obtain the intended account/key through the provider's normal process and inspect its billing before authorizing a live request. An existing Claude/Codex subscription does not establish access to this API. This connector uses HTTP directly; a separate SDK is unnecessary.
 
-Test: disabled means zero provider activity; shadow leaves the baseline packet unchanged; disallowed data never reaches the payload; a source changed mid-call invalidates advice; malformed/unknown-ID/timeout responses preserve usable local recall.
+Protocol and model references inspected on 2026-10-10: [official quickstart](https://docs.typesafe.ai/introduction/quickstart), [models](https://docs.typesafe.ai/models), and [OpenAPI](https://api.typesafe.ai/openapi.json). The example pins `jev-1.13.0`; verify availability for the intended account before use. Installing an SDK is not a local installation of Jev weights.
 
-Calling an existing local Laya server and downloading/installing a new model are separate operations. No server availability, hardware requirement, endpoint compatibility or economic advantage is assumed without checking the chosen setup.
+## Laya prerequisites
+
+Prefer an existing compatible local server. If the user chooses new provisioning, explain that package installation and first startup can download dependencies and model weights. Confirm the chosen model and local resources first. Keep this environment separate from the memory runtime and vault.
+
+The following commands are based on Laya 0.4.2's published server contract; they have **not** been executed as a live inference acceptance test here:
+
+```powershell
+python -m venv C:/Tools/laya-env
+C:/Tools/laya-env/Scripts/python.exe -m pip install 'laya[serve]==0.4.2'
+$env:LAYA_HOST = '127.0.0.1'
+$env:LAYA_PORT = '8765'
+$env:LAYA_MODELS = 'multilingual'
+$env:LAYA_DEFAULT_MODEL = 'multilingual'
+$env:LAYA_AUTO_TASK = '0'
+$env:LAYA_PRELOAD = '1'
+$env:LAYA_JEV_STRICT = '0'
+C:/Tools/laya-env/Scripts/laya-serve.exe
+```
+
+On macOS/Linux use the environment's `bin/python` and `bin/laya-serve`, with equivalent environment assignments. Bind to loopback rather than the server's public-interface default. Keep full responses (`LAYA_JEV_STRICT=0`) so routing and truncation can be checked. The connector request must name the selected checkpoint, such as `multilingual`; do not substitute a Jev model ID. A `/health` response establishes liveness only.
+
+The package version does not pin model weights. Actual hardware performance, provider answer quality and a compatible weight revision remain unverified. Sources: [Laya package](https://pypi.org/project/laya/0.4.2/) and [server implementation at the inspected revision](https://github.com/NandhaKishorM/laya/blob/68804629e8ccd9d616d48a40e87de9fabbeae069/laya/serve.py).
+
+## Verification scope
+
+Tests use synthetic official-protocol responses and real loopback HTTP fixtures to exercise transport, scope, egress, freshness and failure handling. They do not establish live Jev/Laya readiness or useful judgment quality. No provider inference, model download or billing activation was performed for these tests. Assist mode, semantic embeddings, automatic advisor calls and canonical provider writes are not implemented.

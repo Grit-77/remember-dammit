@@ -1,6 +1,6 @@
 # Install the source alpha
 
-This is a runnable **0.1.0a2 source alpha**. Its CLI, local stdio MCP server and
+This is a runnable **0.1.0a3 source alpha**. Its CLI, local stdio MCP server and
 configuration proposal generator share one local vault. The four named clients
 are integration targets: Claude Code, Codex, Cursor and Google Antigravity still
 need real-client acceptance. Every generated proposal says `tested_live: false`.
@@ -158,3 +158,13 @@ Imports store UTF-8 Markdown as private source-excerpt records; frontmatter rema
 Generate a fresh plan against the target for changed files. The same collection, scope and relative path retain one record ID; changes use corrections. A repeated unchanged plan is idempotent. Removed source files do not delete imported memory. This is copy-in adoption, not two-way synchronization.
 
 Application rechecks source content and expected target revisions. A batch can report `status: partial`; check `completed`, `failed_index` and the error before retrying. Completed records remain in the vault. Never equate process exit alone with a completed import.
+
+## Diagnose workspace setup
+
+Run the following with the installed interpreter and the same selection used at installation:
+
+```powershell
+.venv/Scripts/python.exe -m remember_dammit --vault "C:/Memory Vault" setup-check codex --workspace "C:/Projects/my-project" --project demo
+```
+
+Replace the client and paths as needed. The JSON report checks configuration, packaged skill, runtime imports and vault integrity without applying repairs. Inspect its ready/status and per-check codes: process exit zero means the report was produced, not that the installation is ready. Resolve conflicting owner files manually. Native client trust, tool approval and a real save/readback remain separate checks. Optional advisor setup is documented in [PROVIDERS.md](PROVIDERS.md).

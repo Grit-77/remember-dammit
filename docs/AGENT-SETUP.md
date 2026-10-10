@@ -15,8 +15,8 @@ The agent should carry out the installation and explain the result. This helper
 does not download Python, create a virtual environment, install packages, or
 change global client settings. Those installation steps use ordinary commands
 in an explicitly selected checkout. The current implementation provides a local
-vault, scoped MCP tools, and a workspace skill. Jev and Laya connectors are not
-implemented in this version.
+vault, scoped MCP tools, and a workspace skill. Optional Jev/Laya shadow
+assessment uses a separate explicit owner CLI command and configuration.
 
 ## Questions to settle before installation
 
@@ -105,6 +105,10 @@ approvals, and inspect its MCP server list. Antigravity users should confirm
 that the installed client reads the chosen workspace configuration. Successful
 file setup reports `tested_live=false`; it does not prove client acceptance.
 
+Use `setup-check` with the same client, workspace, vault and selection to diagnose
+the configuration, skill, runtime and vault before attaching the client. This
+read-only report does not repair files or establish native approval.
+
 Inspect the exposed schemas, then use the packaged skill for a short interview:
 
 - Ask what the user is working toward, how they prefer help, and which small
@@ -131,12 +135,14 @@ choice in the current conversation:
 > Would you like to continue without an advisor, choose Jev, or choose Laya?
 > Core memory works on its own. Jev may require remote credentials and metered
 > usage; Laya needs a separately installed compatible local server and suitable
-> hardware. This version records a choice but does not install either connector.
+> hardware. Setup records your choice; assessment requires separate configuration
+> and an explicit command, and cannot change your memory or recall order.
 
 Let the user choose. `--advisor none`, `--advisor jev`, or `--advisor laya`
 records the requested choice in the setup report only. For example, repeat the
 same setup command with `--advisor laya`; an unchanged installation remains a
-no-op. The result is `enabled=false` and `setup_status="pending"` for Jev/Laya,
+no-op. The result is `enabled=false`, `connector_available=true` and
+`setup_status="not_configured"` for Jev/Laya,
 or `setup_status="disabled"` for none. This choice is not authorization to
 activate paid usage, buy credits, call a provider, or put keys in notes.
 The report always includes `choice_confirmed=false`: a CLI value, including the
@@ -147,14 +153,16 @@ Then give the user the relevant guidance:
 
 - **None:** explain how to recall a note, save a decision, correct a record, and
   read the first task. No provider is needed for the local memory tools.
-- **Jev:** explain that the requested remote connector is unavailable here. Help
-  identify the user's existing provider/account and its official configuration
-  instructions if requested. Keep credentials outside the vault. Separate any
-  future explicit provider or billing authorization from this recorded choice.
-- **Laya:** explain that the requested local connector is unavailable here. Help
-  inspect an existing local server, its documented compatibility, and hardware
-  requirements if requested. A running server still does not connect Laya to
-  remember-dammit until a compatible connector exists.
+- **Jev:** follow [PROVIDERS.md](PROVIDERS.md) to explain hosted requests and
+  billing, generate the disabled configuration template, and help identify the
+  intended account and environment-variable setup. Keep credentials outside the
+  vault. Preview eligible requests and obtain explicit query-transfer approval
+  before a live call. Never relabel private notes or enable paid usage silently.
+- **Laya:** follow [PROVIDERS.md](PROVIDERS.md) to inspect an existing local server
+  or explain separate provisioning and model downloads. Generate its disabled
+  configuration template, select the checkpoint, and preview the loopback
+  request. An installed package or healthy server is not proof of a successful
+  assessment; inspect the actual result and report failures.
 
 Finish by explaining the selected scope, installed files, verified readbacks,
 current local memory tools, optional connector status, and next action. If the
