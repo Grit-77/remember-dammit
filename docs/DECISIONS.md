@@ -5,8 +5,8 @@
 - Name: **Remember, Dammit.**
 - Repository slug: `remember-dammit`.
 - Public-facing language: English.
-- Public open-source direction inspired by Avenox Beyin.
-- Memorable direct naming with personality, as in Done is a claim.
+- Public open-source personal-memory vault.
+- Memorable direct naming with personality.
 - The product must be model-independent and work across many harnesses, explicitly including Claude Code, Codex, Antigravity, and Cursor.
 - The vault itself is central: a personal second brain, not merely a two-client project ledger.
 - Jev/Laya may be optional integrations. Their use must not be a prerequisite for the vault.
@@ -24,9 +24,9 @@ The initial brief limited the product to a project-local correction ledger targe
 - Shared model-neutral engine with CLI/JSON/MCP and capability-specific adapters.
 - Human-readable Markdown plus portable revision/provenance metadata; machine-local indexes are disposable.
 - Local lexical passage search as the mandatory baseline, with evaluated optional semantic retrieval.
-- Advisors disabled by default; shadow evaluation before active effects. Laya initially shadow-only, consistent with the upstream evidence studied.
+- Advisors disabled by default; shadow evaluation before active effects. Candidate providers require their own compatibility and quality checks.
 - Python with PyYAML is the implemented core; the official MCP SDK is an optional extra. The current package contract is in pyproject.toml.
-- MIT selected for the original source alpha; retain upstream notices for any future substantial reuse. No upstream implementation has been copied.
+- Apache-2.0 selected by the owner for new development on 2026-10-10.
 
 ## Open engineering choices
 
@@ -34,6 +34,6 @@ The initial brief limited the product to a project-local correction ledger targe
 - Further packaging routes and dependency changes beyond the current source installation.
 - Exact native automation per installed harness surface.
 - Retrieval fixtures and evaluation thresholds, provider performance/cost observations, and supported synchronization paths.
-- Future packaged releases beyond the current MIT-licensed source alpha.
+- Future packaged releases beyond the current Apache-2.0-licensed source alpha.
 
 Approved requirements are not evidence that proposed behavior is implemented or tested. No optional provider has been enabled or called by this design work.

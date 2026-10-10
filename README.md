@@ -66,7 +66,6 @@ Existing Obsidian-vault adoption, native editor reconciliation, offline multi-ma
 - [Vault architecture](docs/VAULT.md)
 - [Harness contract](docs/HARNESSES.md)
 - [Optional Jev/Laya design](docs/PROVIDERS.md)
-- [Research](docs/RESEARCH.md)
 - [Claim evidence and verification commands](FACTS.md)
 
 Run the development checks:
@@ -75,4 +74,4 @@ Run the development checks:
 python -m unittest discover -s tests -v
 ```
 
-Inspired by [Avenox Beyin](https://github.com/avenoxai/avenoxbeyin). No upstream implementation has been copied. [MIT licensed](LICENSE). No perfect-recall, universal compatibility, cost-saving or adoption claim is made.
+[Apache-2.0 licensed](LICENSE). No perfect-recall, universal compatibility, cost-saving or adoption claim is made.

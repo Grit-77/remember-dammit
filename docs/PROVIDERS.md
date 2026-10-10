@@ -1,6 +1,6 @@
 # Optional provider contract
 
-Proposal based on source research, 2026-10-10. No connector is implemented, activated, installed or called by this project.
+Proposed extension contract, 2026-10-10. No connector is implemented, activated, installed or called by this project.
 
 ## Keep three roles separate
 
@@ -12,11 +12,9 @@ Proposal based on source research, 2026-10-10. No connector is implemented, acti
 
 The active user's agent can reason, write proposals, and explain results using its existing session. That does not require the memory engine to invoke another provider.
 
-## What upstream actually does
+## Planned assessment roles
 
-In Avenox Beyin 3.9.0, Jev is an optional advisor for candidate selection, proposed-memory/source assessment, and answer support. It does not store or approve memories. It cannot retrieve records absent from the local candidate pool.
-
-Laya is a separately installed local System One protocol server. Upstream restricts it to shadow mode after weaker results in its bounded evaluations. Those observations are not general accuracy guarantees. Both roles are documented in the pinned [Jev/Laya guide](https://github.com/avenoxai/avenoxbeyin/blob/d8167fb897086f8f6177870f7c92c8fa7c2a1314/docs/v3/JEV.md).
+An optional advisor may assess supplied candidates, proposed memories, and source support. It cannot store or approve memories, retrieve outside its candidate set, or widen permissions. Each provider must be evaluated against this project's fixtures before it can affect results.
 
 ## Planned modes
 
@@ -24,7 +22,7 @@ Laya is a separately installed local System One protocol server. Upstream restri
 - **Shadow:** compute an assessment only when explicitly configured; preserve the local selection and order. Log bounded metadata for comparison, not raw notes or credentials.
 - **Assist:** after evaluation and explicit enablement, allow a capable advisor to suggest ordering/selection from eligible supplied IDs. Core scope, freshness, uncertainty and budget rules still govern the final packet.
 
-Laya begins shadow-only. Jev Assist is a proposal requiring validation, not an enabled capability. Capture authorization is unchanged in all modes.
+All new provider integrations begin in shadow mode. Assist mode requires validation and explicit enablement. Capture authorization is unchanged in all modes.
 
 ## Input boundary
 
@@ -44,7 +42,7 @@ An advisor cannot grant scope, approve a proposed memory, elect a winning confli
 
 ## Evaluation before Assist
 
-Compare Off versus Shadow on fixed English/Turkish fixtures: candidate recall, source-support judgment, harmful exclusions, unresolved conflicts, latency and observed provider usage. Keep actual denominators and failure cases. Do not borrow upstream percentages as this project's results.
+Compare Off versus Shadow on fixed English/Turkish fixtures: candidate recall, source-support judgment, harmful exclusions, unresolved conflicts, latency and observed provider usage. Keep actual denominators and failure cases. Report only this project's measured results.
 
 Test: disabled means zero provider activity; shadow leaves the baseline packet unchanged; disallowed data never reaches the payload; a source changed mid-call invalidates advice; malformed/unknown-ID/timeout responses preserve usable local recall.
 

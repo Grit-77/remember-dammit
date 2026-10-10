@@ -179,5 +179,3 @@ Planned operations: `doctor`, `explain`, `history`, `conflicts`, `reconcile`, `r
 3. Kill the process at every durable-write boundary, retry operation IDs, and rebuild SQLite: content, head sets, supersession, and recovery results remain consistent.
 4. Offline forks plus source deletion, delivered in either order: same unresolved heads, no silent resurrection, and rejection of resolution based on incomplete heads.
 5. A mixed corpus of opposing claims, stale summaries, moved sources, prompt-like source text and oversized records: budget and scope hold, and uncertainty survives packaging.
-
-Sources informing the proposal: [Avenox Markdown contract](https://github.com/avenoxai/avenoxbeyin/blob/d8167fb897086f8f6177870f7c92c8fa7c2a1314/docs/v3/MARKDOWN.md), [Avenox runtime](https://github.com/avenoxai/avenoxbeyin/blob/d8167fb897086f8f6177870f7c92c8fa7c2a1314/docs/v3/RUNTIME.md), [Obsidian properties](https://obsidian.md/help/properties), and [Obsidian Sync conflict behavior](https://obsidian.md/help/sync/troubleshoot). This design is an independent proposal, not a description of upstream implementation.

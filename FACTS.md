@@ -13,7 +13,7 @@ Implementation reviewed: `c8e4b2c` (2026-10-10). The initial publication prepara
 | No model API key or provider invocation in the core path | `storage.py`, `retrieval.py`, `cli.py` and the core demo; `pyproject.toml` separates the MCP extra | The connected AI client still uses its normal account/provider. Optional advisor connectors are unimplemented. |
 | Core-only wheel installation works | `python -m pip wheel --no-deps .`; install that wheel into a clean virtual environment, run `examples/demo.py` using that interpreter | Observed locally with Python 3.12.14 and PyYAML 6.0.3, without the MCP package in the clean environment. |
 | Tests and platform observations | `python -m unittest discover -s tests -v`; per-commit [CI results](https://github.com/Grit-77/remember-dammit/actions/workflows/test.yml) | Native four-harness behavior is a separate, still-open acceptance matrix. |
-| MIT license | `LICENSE`, `pyproject.toml` | Original implementation. Retain applicable upstream notices if code is reused later. |
+| Apache-2.0 license | `LICENSE`, `NOTICE`, `pyproject.toml`; owner decision 2026-10-10 | Applies to this publication revision; previous commits retain their recorded license text. |
 
 The repository's detailed architecture documents are proposals. Their planned capabilities must not be presented as shipped behavior; [STATUS.md](docs/STATUS.md) enumerates current boundaries.
 
@@ -21,7 +21,9 @@ The repository's detailed architecture documents are proposals. Their planned ca
 
 - Removed the obsolete “no public remote” statement once publication was authorized.
 - Corrected the illustrative vault's statement that IDs/revision manifests had not been implemented; the example remains non-executable.
-- Recorded the current Python packaging and MIT choice instead of calling them undecided.
+- Recorded the current Python packaging and license choice instead of calling them undecided.
 - Linked CI rather than implying a configured matrix had already passed.
 - Labeled the broader propose/commit/reconciliation protocol as a target, separate from the current tool surface.
 - No star, performance, token-saving, perfect-recall or native four-client success figure is claimed.
+- Removed third-party project comparisons, inspiration acknowledgements, and external documentation citations from the product narrative at the owner's request. Harness names remain where needed for compatibility and installation.
+- Switched the current publication's license metadata and license text to Apache-2.0 after explicit owner approval; added NOTICE.

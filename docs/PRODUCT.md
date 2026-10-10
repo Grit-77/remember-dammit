@@ -6,7 +6,7 @@ Updated 2026-10-10. This describes the full architecture target. A foundation so
 
 - Brand: **Remember, Dammit.** Repository slug: `remember-dammit`.
 - English public-facing materials.
-- A genuinely useful second-brain vault, inspired by Avenox Beyin.
+- A useful personal second-brain vault with inspectable memory and source history.
 - Model independence and multiple harnesses: Claude Code, Codex, Google Antigravity, Cursor, and an extensible path for others.
 - Optional Jev/Laya-style assistance; the core must remain usable without it.
 

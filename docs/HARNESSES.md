@@ -48,11 +48,4 @@ Then separately record start/resume/compaction/stop automation and duplicate-eve
 
 All four named clients must pass the explicit baseline before the first broad multi-harness release. Model changes should not alter vault format; capture any model-specific instruction-following limitations honestly.
 
-## Official sources inspected
-
-- Claude Code: [MCP](https://code.claude.com/docs/en/mcp), [skills](https://code.claude.com/docs/en/skills), [memory/instructions](https://code.claude.com/docs/en/memory), [hooks](https://code.claude.com/docs/en/hooks).
-- Codex: [MCP](https://developers.openai.com/codex/mcp/), [skills](https://developers.openai.com/codex/skills/), [AGENTS.md](https://developers.openai.com/codex/guides/agents-md/), [hooks](https://developers.openai.com/codex/hooks/).
-- Cursor: [MCP](https://cursor.com/docs/mcp), [skills](https://cursor.com/docs/skills), [rules](https://cursor.com/docs/rules), [hooks](https://cursor.com/docs/hooks).
-- Antigravity: [MCP](https://antigravity.google/docs/mcp), [skills](https://antigravity.google/docs/skills), [rules](https://antigravity.google/docs/rules), [hooks](https://antigravity.google/docs/hooks).
-
-Official documentation availability does not establish compatibility with the user's installed versions. Recheck during implementation.
+Configuration formats and client behavior must be verified against the installed version during integration.

@@ -20,8 +20,6 @@ _HARNESS_INSTRUCTIONS = {
         "or ~/.claude/skills/remember-dammit/SKILL.md. Preserve existing instructions.",
         "Open Claude Code interactively to complete workspace trust and project MCP approval, "
         "then inspect /mcp. Do not bypass native permissions.",
-        "Official MCP: https://code.claude.com/docs/en/mcp ; "
-        "skills: https://code.claude.com/docs/en/skills",
     ),
     "codex": (
         "Merge the mcp_servers.remember-dammit table into project .codex/config.toml "
@@ -31,8 +29,6 @@ _HARNESS_INSTRUCTIONS = {
         "or ~/.agents/skills/remember-dammit/SKILL.md. Preserve existing instructions.",
         "Restart the relevant Codex client and inspect its MCP server list or /mcp. "
         "Complete native trust and tool approvals in the client.",
-        "Official MCP: https://developers.openai.com/codex/mcp/ ; "
-        "skills: https://developers.openai.com/codex/skills/",
     ),
     "cursor": (
         "Merge only mcpServers.remember-dammit into project .cursor/mcp.json "
@@ -42,7 +38,6 @@ _HARNESS_INSTRUCTIONS = {
         "or ~/.agents/skills. Preserve existing instructions.",
         "Reload the chosen local client and inspect its MCP tools. "
         "Complete native approvals; local files do not establish cloud compatibility.",
-        "Official MCP: https://cursor.com/docs/mcp ; skills: https://cursor.com/docs/skills",
     ),
     "antigravity": (
         "In Antigravity IDE open MCP Servers > Manage MCP Servers > View raw config. "
@@ -54,8 +49,6 @@ _HARNESS_INSTRUCTIONS = {
         "~/.gemini/antigravity-cli/skills for CLI. Preserve existing instructions.",
         "Refresh the chosen client's MCP server list and complete native approvals. "
         "A proposal does not establish acceptance on every Antigravity surface.",
-        "Official MCP: https://antigravity.google/docs/mcp ; "
-        "skills: https://antigravity.google/docs/skills",
     ),
 }
 
