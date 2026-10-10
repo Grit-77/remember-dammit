@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from remember_dammit.errors import VaultError
 from remember_dammit.storage import Vault
@@ -24,7 +25,9 @@ class OfflineTransferTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.base = Path(self.temp.name)
+        # Resolve the OS temporary-directory alias for positive fixtures only;
+        # deliberate links created by rejection tests remain unresolved.
+        self.base = Path(self.temp.name).resolve()
         try:
             self.transfer = importlib.import_module('remember_dammit.replication')
         except ModuleNotFoundError:
@@ -328,6 +331,31 @@ r.import_bundle(Vault(sys.argv[1]), sys.argv[2])
         before = inventory(target.root)
         self.assert_code('invalid_bundle', self.transfer.import_bundle, target, bundle)
         self.assertEqual(inventory(target.root), before)
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows junctions require native reparse detection')
+    def test_junction_rejection_without_pathlib_is_junction(self):
+        # Python 3.11 lacks Path.is_junction: keep real NTFS junctions and bytes,
+        # disable only the optional convenience method on a 3.12 test host.
+        with patch.object(Path, 'is_junction', None, create=True):
+            self.test_linked_object_directory_is_rejected()
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows junctions require native reparse detection')
+    def test_export_rejects_junction_without_pathlib_is_junction(self):
+        source = self.fork('junction-source')
+        revisions = source.root / '.remember/revisions'
+        external = self.base / 'external-source-revisions'
+        self.assertTrue(revisions.resolve().is_relative_to(self.base))
+        self.assertTrue(external.resolve().is_relative_to(self.base))
+        revisions.rename(external)
+        linked = subprocess.run(['cmd', '/c', 'mklink', '/J', str(revisions), str(external)],
+                                capture_output=True, text=True)
+        self.assertEqual(linked.returncode, 0, linked.stderr)
+        before = inventory(source.root)
+        with patch.object(Path, 'is_junction', None, create=True):
+            self.assert_code('invalid_bundle', self.transfer.export_bundle,
+                             source, self.base / 'junction-export')
+        self.assertEqual(inventory(source.root), before)
+        self.assertFalse((self.base / 'junction-export' / 'COMPLETE.json').exists())
 
     def test_preview_reports_effective_policy_changes_without_admission(self):
         personal = self.seed.put(title='Personal', body='Private preview fixture.', scope='personal')

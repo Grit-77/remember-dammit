@@ -149,6 +149,8 @@ class Vault:
                 raise VaultError('incomplete_transfer', 'This migration destination is not yet verified.')
             try:
                 config = json.loads((_root_path(root) / '.remember/vault.json').read_bytes())
+            except RecursionError:
+                raise VaultError('invalid_vault', 'The vault metadata or layout is invalid.') from None
             except (OSError, ValueError, TypeError):
                 config = {}
             if isinstance(config, dict) and config.get('schema') == 2:

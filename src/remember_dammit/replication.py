@@ -15,7 +15,7 @@ import stat
 import uuid
 
 from .errors import VaultError
-from .local_state import local_state_directory
+from .local_state import _is_link, local_state_directory
 from .locking import writer_lock
 from .storage import Vault
 
@@ -43,8 +43,7 @@ def _safe_root(root):
     try:
         path = Path(root).absolute()
         for part in (path, *path.parents):
-            junction = getattr(part, 'is_junction', None)
-            if part.is_symlink() or (callable(junction) and junction()):
+            if _is_link(part):
                 _fail('invalid_bundle', 'Transfer paths must not contain links.')
         return path.resolve()
     except (OSError, TypeError, ValueError):
@@ -67,7 +66,7 @@ def _limits(max_files, max_bytes):
 def _read(path, remaining, *, missing='incomplete_transfer'):
     try:
         info = path.lstat()
-        if not stat.S_ISREG(info.st_mode) or path.is_symlink():
+        if not stat.S_ISREG(info.st_mode) or _is_link(path):
             _fail('invalid_bundle', 'Every transfer object must be a regular file.')
         if info.st_size > remaining:
             _fail('transfer_limit', 'The transfer exceeds its byte limit.')
@@ -95,8 +94,7 @@ def _walk(root, allowed_directories):
     while pending:
         directory = pending.pop()
         for path in directory.iterdir():
-            junction = getattr(path, 'is_junction', None)
-            if path.is_symlink() or (callable(junction) and junction()):
+            if _is_link(path):
                 _fail('invalid_bundle', 'Transfer directories must not contain links.')
             info = path.lstat()
             if stat.S_ISDIR(info.st_mode):

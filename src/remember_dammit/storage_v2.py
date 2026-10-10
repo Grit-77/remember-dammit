@@ -108,7 +108,7 @@ class CausalVault(Vault):
             if exc.code == 'integrity_error':
                 raise
             raise VaultError('invalid_vault', 'The vault metadata or layout is invalid.') from None
-        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError):
             raise VaultError('invalid_vault', 'The vault metadata or layout is invalid.') from None
 
     def _read_record(self, descriptor):
@@ -143,7 +143,7 @@ class CausalVault(Vault):
             if exc.code in ('incomplete_transfer', 'integrity_error'):
                 raise
             raise VaultError('integrity_error', 'A committed revision is invalid.') from None
-        except (OSError, ValueError, TypeError, KeyError, UnicodeError, yaml.YAMLError):
+        except (OSError, ValueError, TypeError, KeyError, UnicodeError, yaml.YAMLError, RecursionError):
             raise VaultError('integrity_error', 'A committed revision is changed or invalid.') from None
 
     def _nodes(self):
@@ -178,7 +178,7 @@ class CausalVault(Vault):
                 if exc.code == 'integrity_error':
                     raise
                 raise VaultError('integrity_error', 'A committed operation is invalid.') from None
-            except (OSError, ValueError, TypeError, KeyError):
+            except (OSError, ValueError, TypeError, KeyError, RecursionError):
                 raise VaultError('integrity_error', 'A committed operation is changed or invalid.') from None
         for op in nodes.values():
             if any(parent not in nodes for parent in op['parents']):
@@ -197,7 +197,7 @@ class CausalVault(Vault):
                     raise VaultError('incomplete_transfer', 'An acknowledged operation has not arrived.')
             except VaultError:
                 raise
-            except (OSError, ValueError, TypeError, KeyError):
+            except (OSError, ValueError, TypeError, KeyError, RecursionError):
                 raise VaultError('integrity_error', 'An acknowledgement is invalid.') from None
         return nodes
 

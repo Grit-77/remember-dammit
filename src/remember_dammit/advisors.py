@@ -165,6 +165,17 @@ def _post(config, payload, key, timeout):
     deadline = time.monotonic() + timeout
     expired = threading.Event()
     active_socket = []
+
+    send = connection.send
+    def send_before_deadline(data):
+        # Timer callbacks can be scheduled late. Check at each actual header or
+        # body send, including a request resumed after its deadline has passed.
+        if expired.is_set() or time.monotonic() >= deadline:
+            expired.set()
+            raise _ProviderError('timeout')
+        return send(data)
+    connection.send = send_before_deadline
+
     def expire():
         expired.set()
         sock = active_socket[0] if active_socket else connection.sock

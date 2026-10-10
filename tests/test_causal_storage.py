@@ -263,9 +263,22 @@ class CausalStorageTests(unittest.TestCase):
 
     def test_deep_malformed_committed_json_is_structured_integrity_error(self):
         self.note()
-        operation = next((self.v.root / '.remember/operations').glob('*.json'))
-        operation.write_bytes(b'[' * 2000 + b'0' + b']' * 2000)
-        self.assertCode('integrity_error', self.v.list_records)
+        managed = self.v.root / '.remember'
+        targets = [managed / 'vault.json', next((managed / 'operations').glob('*.json')),
+                   next((managed / 'acks').glob('*.json'))]
+        for target in targets:
+            with self.subTest(object=target.parent.name):
+                original = target.read_bytes()
+                corrupt = b'[' * 2000 + b'0' + b']' * 2000
+                try:
+                    target.write_bytes(corrupt)
+                    expected = 'invalid_vault' if target.name == 'vault.json' else 'integrity_error'
+                    self.assertCode(expected, self.v.list_records)
+                    if target.name == 'vault.json':
+                        self.assertCode(expected, Vault, self.v.root)
+                    self.assertEqual(target.read_bytes(), corrupt)
+                finally:
+                    target.write_bytes(original)
 
     def test_missing_terminal_revocation_cannot_restore_disclosure(self):
         personal = self.v.put(title='Private', body='Secret bytes', scope='personal')

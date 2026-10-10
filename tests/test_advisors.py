@@ -336,6 +336,39 @@ class AdvisorTests(unittest.TestCase):
         self.assertEqual(result['assessments'], [])
         self.assertEqual(self.requests, [], 'timeout must prevent implicit reconnect and all late POSTs')
 
+    def test_late_watchdog_cannot_send_authorization_after_absolute_deadline(self):
+        received = threading.Event()
+        config = dict(self.server(mutate=received.set), timeout_seconds=0.05,
+                      api_key_env='SYNTHETIC_LAYA_TEST_KEY')
+        watchdog_due, release_watchdog = threading.Event(), threading.Event()
+        original_timer = threading.Timer
+        original_request = http.client.HTTPConnection.request
+
+        def delayed_timer(interval, callback):
+            def scheduled_late():
+                watchdog_due.set()
+                if release_watchdog.wait(5):
+                    callback()
+            return original_timer(interval, scheduled_late)
+
+        def request_after_deadline(connection, *args, **kwargs):
+            # Reach the deadline without relying on the watchdog thread having
+            # executed cancellation. The actual loopback send remains real.
+            self.assertTrue(watchdog_due.wait(5), 'fixture watchdog did not reach its deadline')
+            return original_request(connection, *args, **kwargs)
+
+        try:
+            with patch.dict(os.environ, {'SYNTHETIC_LAYA_TEST_KEY': 'synthetic-test-token'}), \
+                 patch('remember_dammit.advisors.threading.Timer', new=delayed_timer), \
+                 patch('http.client.HTTPConnection.request', new=request_after_deadline):
+                result = self.assess(config=config)
+            received.wait(0.1)
+            self.assertEqual(result['advisor']['reason'], 'timeout')
+            self.assertEqual(result['assessments'], [])
+            self.assertEqual(self.requests, [], 'a late watchdog must not permit an expired authorized POST')
+        finally:
+            release_watchdog.set()
+
     def test_complete_content_length_and_chunked_responses_are_valid_advice(self):
         for framing in ('length', 'length-keepalive', 'length-close', 'chunked', 'eof'):
             with self.subTest(framing=framing):

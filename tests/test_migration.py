@@ -22,10 +22,13 @@ class MigrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        self.source = Path(self.temp.name) / 'source'
+        # macOS temporary paths may traverse /var; positive fixtures use the
+        # canonical directory rather than testing linked-path admission.
+        base = Path(self.temp.name).resolve()
+        self.source = base / 'source'
         self.vault = Vault.initialize(self.source, format_version=1)
-        self.target = Path(self.temp.name) / 'target'
-        self.backup = Path(self.temp.name) / 'backup'
+        self.target = base / 'target'
+        self.backup = base / 'backup'
         self.first = self.vault.put(record_id='evidence', operation_id='first-operation',
                                     title='Owner statement', body='Keep exact original bytes.',
                                     scope='personal')
