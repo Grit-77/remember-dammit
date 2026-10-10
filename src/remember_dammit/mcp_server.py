@@ -96,6 +96,12 @@ def create_server(vault, *, project=None, personal=False):
             raise ToolError(json.dumps({"error": {"code": exc.code, "message": message}}, separators=(",", ":"))) from None
 
     @server.tool()
+    def overview(limit: Annotated[int, Field(ge=1, le=100)] = 50) -> dict[str, Any]:
+        """Browse this selection's notes, tasks, proposals and exact source backlinks."""
+        from .overview import overview as inspect_vault
+        return invoke(lambda: inspect_vault(vault, limit=limit, **selection))
+
+    @server.tool()
     def recall(query: QueryText, limit: Annotated[int, Field(ge=1, le=100)] = 10, include_history: bool = False) -> dict[str, Any]:
         """Search only this server's authorized memory selection."""
         return invoke(lambda: retrieval.search(vault, query, limit=limit, include_history=include_history, **selection))

@@ -1,6 +1,6 @@
 ---
 name: remember-dammit
-description: Use for explicit memory recall, saving decisions and preferences, correcting remembered facts, first-use get-to-know-me interviews, or creating a small task and reading it back from the configured vault.
+description: Use for memory recall, saving decisions and preferences, correcting remembered facts, browsing vault notes and source backlinks, reviewing Markdown working-copy edits, first-use interviews, or creating a small task and reading it back from the configured vault.
 ---
 
 # Remember, Dammit.
@@ -15,7 +15,7 @@ When the user asks to be interviewed, start with a few short questions in their 
 - How do you prefer me to communicate and help?
 - What small task would you like to tackle first?
 
-Explain the current save scope briefly. A project-bound server keeps the answers in that project; it cannot write a global personal profile. Do not collect unrelated sensitive details. Check relevant existing memory first so the user need not repeat themselves.
+Explain the current save scope briefly. A project-bound server keeps the answers in that project; it cannot write a global personal profile. Do not collect unrelated sensitive details. Use `overview` when available to inspect existing notes, tasks and proposed records without guessing a search phrase; follow relevant IDs with `show` and use `recall` for focused questions. Do not make the user repeat retained answers.
 
 For each useful answer the user asked to retain, call `remember` with `kind="source"`, `evidence="user-statement"`, an appropriate short title and the question plus the user's actual answer. Keep source wording distinguishable from your interpretation. Save only deliberately selected information, not the entire transcript.
 
@@ -31,6 +31,14 @@ Finish by actually calling `show` for the saved source and task IDs, and `recall
 2. **Save:** use `remember` for requested or already authorized durable knowledge. Supply source IDs and a unique operation ID. Keep uncertain inferences proposed. Do not store credentials or unrelated project material.
 3. **Correct:** inspect the current ID/revision with `show`, then call `correct` with `expected_revision` and a new operation ID. Use `history` for predecessors. On a conflict, read the current state; do not force an overwrite or directly edit immutable payload files.
 4. **Continue:** save a separate bounded checkpoint when authorized. Include goal, confirmed decisions, evidence and next action. Do not overwrite a global last-session file or assume automatic loading in the next client. The current MCP server writes only its fixed personal/project scope.
+
+## Browse or edit working notes
+
+Use `overview` for scoped navigation and exact source/backlinks. Its counts include record kinds and lifecycle states; do not interpret every active task record as unfinished or a proposed inference as a confirmed fact. The list can omit records/links due to limits. Use `show` for the actual content and `context` for byte-bounded recall.
+
+For requested Markdown editing, use the installed owner's CLI through an authorized path, keeping the same vault and selection: `edit-open` creates a new separate working folder; `edit-plan` previews title/body changes; `edit-apply` checks and admits them as corrections. Keep the plan outside the working folder and public version control. Shared/granted context and identity metadata are read-only. Missing/new files are skipped, not deletion or creation instructions.
+
+Review actual changes and dependency warnings within the user's authorized edit scope. A generated plan is not new permission. A source correction can make dependent notes require evidence review; do not automatically rewrite claims, source IDs or grants. On a stale head, changed file or access conflict, retain both versions and explain the conflict instead of forcing an overwrite. Check complete/partial/conflict status and actual successor IDs, then read back. A repeated plan can acknowledge a historical admission; verify current heads separately. Apply leaves working files unchanged, so open a new folder for the next editing round. No file watching, automatic editor refresh or text merge is provided.
 
 ## Optional advisors after setup
 

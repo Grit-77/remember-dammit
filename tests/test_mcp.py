@@ -53,6 +53,21 @@ class McpTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(result.is_error)
             self.assertIn("Use Postmark", json.dumps(result.structured_content))
 
+    async def test_overview_is_fixed_scope_and_includes_exact_source_backlinks(self):
+        source = self.vault.put(title="Launch goal", body="Write a guide.", kind="source", scope="project:atlas")
+        task = self.vault.put(title="First task", body="Create the guide example.", kind="task",
+                              scope="project:atlas", sources=[source["id"]])
+        async with self.client() as client:
+            result = await client.call_tool("overview", {"limit": 10})
+        self.assertFalse(result.is_error)
+        report = result.structured_content
+        self.assertEqual(report["total_count"], 2)
+        self.assertEqual(report["summary"]["by_kind"]["task"], 1)
+        records = {item["id"]: item for item in report["records"]}
+        self.assertEqual(records[source["id"]]["backlinks"][0]["id"], task["id"])
+        for hidden in (self.foreign, self.personal):
+            self.assertNotIn(hidden["id"], json.dumps(report))
+
     async def test_context_model_facing_text_obeys_requested_byte_budget(self):
         self.vault.put(title="Mail", body="Istanbul " * 20, scope="project:atlas")
         async with self.client() as client:

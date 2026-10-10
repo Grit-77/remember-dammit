@@ -500,8 +500,17 @@ class Vault:
             raise VaultError('storage_error', 'The operation could not be persisted; retry with the same operation ID.') from None
 
     def correct(self, record_id, *, expected_revision, title, body, operation_id=None,
-                actor='local', aliases=None, sources=None):
+                actor='local', aliases=None, sources=None, expected_snapshot=None):
+        """Correct a head, optionally binding prior checks to a vault snapshot.
+
+        The snapshot is a precondition for a new write, not part of its request
+        identity. An exact operation replay still returns its historical receipt.
+        """
         _id(record_id, 'Record ID')
+        if expected_snapshot is not None and (
+                not isinstance(expected_snapshot, str) or len(expected_snapshot) != 64
+                or any(character not in '0123456789abcdef' for character in expected_snapshot)):
+            raise VaultError('invalid_input', 'expected_snapshot must be a vault snapshot digest.')
         operation_id = _id(operation_id if operation_id is not None else uuid.uuid4().hex, 'Operation ID')
         request = dict(action='correct', record_id=record_id, expected_revision=expected_revision,
                        title=title, body=body, actor=actor, aliases=aliases, sources=sources)
@@ -516,6 +525,8 @@ class Vault:
                 old_result = self._retry(data, operation_id, request_digest)
                 if old_result is not None:
                     return old_result
+                if expected_snapshot is not None and data['snapshot'] != expected_snapshot:
+                    raise VaultError('source_changed', 'Vault content or sharing policy changed after preflight.')
                 old = data['current'].get(record_id)
                 if old is None:
                     raise VaultError('not_found', 'The record does not exist.')

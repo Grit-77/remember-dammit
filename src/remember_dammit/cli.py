@@ -63,6 +63,20 @@ def build_parser():
         command.add_argument("--operation-id")
     commands.add_parser("doctor")
     commands.add_parser("reindex")
+    overview = commands.add_parser("overview", help="Browse scoped notes, tasks, proposals and exact source backlinks")
+    _selection(overview)
+    overview.add_argument("--audience", choices=["private", "shared", "public"], default="private")
+    overview.add_argument("--limit", type=int, default=100)
+    edit_open = commands.add_parser("edit-open", help="Create a new scoped Markdown working copy")
+    _selection(edit_open)
+    edit_open.add_argument("--destination", required=True)
+    edit_plan = commands.add_parser("edit-plan", help="Preview title/body corrections from a working copy")
+    _selection(edit_plan)
+    edit_plan.add_argument("--workspace", required=True)
+    edit_apply = commands.add_parser("edit-apply", help="Apply a reviewed editing plan with revision checks")
+    _selection(edit_apply)
+    edit_apply.add_argument("--workspace", required=True)
+    edit_apply.add_argument("--plan", required=True, help="Reviewed JSON plan kept outside the working copy")
     export = commands.add_parser("export", help="Write a new read-only Markdown snapshot")
     _selection(export)
     export.add_argument("--destination", required=True)
@@ -167,7 +181,28 @@ def main(argv=None):
                 result = {"vault_id": vault.vault_id, "initialized": True}
             else:
                 vault = Vault(args.vault)
-                if args.command == "remember":
+                if args.command == "edit-open":
+                    from .editing import open_editing
+                    result = open_editing(vault, args.destination, project=args.project, personal=args.personal)
+                elif args.command == "edit-plan":
+                    from .editing import plan_edits
+                    result = plan_edits(vault, args.workspace, project=args.project, personal=args.personal)
+                elif args.command == "edit-apply":
+                    from .editing import apply_edits, MAX_PLAN_BYTES
+                    try:
+                        with open(args.plan, "rb") as handle:
+                            payload = handle.read(MAX_PLAN_BYTES + 1)
+                        if len(payload) > MAX_PLAN_BYTES:
+                            raise ValueError
+                        plan = json.loads(payload.decode("utf-8"))
+                    except (OSError, ValueError, UnicodeError, RecursionError):
+                        raise VaultError("invalid_plan", "Specify a readable, bounded editing JSON preview.") from None
+                    result = apply_edits(vault, args.workspace, plan, project=args.project, personal=args.personal)
+                elif args.command == "overview":
+                    from .overview import overview
+                    result = overview(vault, project=args.project, personal=args.personal,
+                                      audience=args.audience, limit=args.limit)
+                elif args.command == "remember":
                     result = vault.put(**{key: value for key, value in vars(args).items() if key not in {"command", "vault"}})
                 elif args.command == "correct":
                     result = vault.correct(args.record_id, **{key: value for key, value in vars(args).items() if key not in {"command", "vault", "record_id"}})
@@ -205,6 +240,8 @@ def main(argv=None):
                         result = operation(vault, args.query, **fields)
         _emit(result, packet=args.command == "context")
         if args.command == "import-apply" and result["status"] == "partial":
+            return 1
+        if args.command in {"edit-plan", "edit-apply"} and result.get("status") in {"conflict", "partial"}:
             return 1
         return 0
     except VaultError as exc:
