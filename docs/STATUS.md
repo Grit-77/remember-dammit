@@ -94,8 +94,12 @@ session records are explicit; MCP does not select arbitrary session scopes.
 Local synthetic checks have been exercised on Windows. Those runs do not
 establish cross-platform behavior. CI configuration targets Windows, macOS and
 Linux with Python 3.11/3.12; consult actual results for the published commit.
-Native Claude Code, Codex, Cursor and Antigravity acceptance and live sync-client
-trials remain untested for this release. No live personal vault migration is claimed.
+A private synthetic trial exercised native Codex CLI sessions and isolated live
+Syncthing transport on actual Windows, macOS and Linux machines. See the
+[bounded acceptance report](LIVE-ACCEPTANCE.md) for versions, receipts and limits.
+Claude Code native attempts were blocked before tool calls by authentication or
+quota; Cursor/Antigravity and desktop GUI acceptance remain open. No live personal
+vault migration is claimed.
 
 From an installed checkout:
 

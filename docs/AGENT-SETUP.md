@@ -59,9 +59,10 @@ $rdVault = 'C:\Memory\remember-dammit'
 ```
 
 On macOS/Linux, use an existing `python3`, create the environment with
-`python3 -m venv --copies .venv`, and invoke the absolute `.venv/bin/python`
-for the same module commands. A normal linked POSIX venv executable is also
-supported, preserving the venv command path. Other selected paths and executable
+`python3 -m venv .venv`, and invoke the absolute `.venv/bin/python`
+for the same module commands. Keep the default POSIX interpreter links: forcing
+`--copies` can break relocatable Python installations. The setup helper supports
+a normal linked POSIX venv executable and preserves its command path. Other selected paths and executable
 parent directories must not contain links or Windows junctions.
 
 Replace `codex` with `claude`, `cursor`, or `antigravity` for the selected client.

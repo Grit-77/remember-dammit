@@ -2,8 +2,9 @@
 
 Source alpha 0.2.0a1 retains independent contributions from offline copies of
 one owner's vault. Explicit object exchange is implemented through the CLI.
-No background sync service is installed; live sync-client trials and native
-client acceptance remain separate work.
+No background sync service is installed by this package. A separate private
+Syncthing trial and native Codex CLI observations are described in the
+[bounded acceptance report](LIVE-ACCEPTANCE.md); other native acceptance remains open.
 
 ## Start with one vault identity
 

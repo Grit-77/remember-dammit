@@ -4,7 +4,7 @@
 
 Local, source-linked memory shared by your AI agents.
 
-> **Source alpha · 0.2.0a1.** A local engine, CLI and stdio MCP server with a causal, portable vault format. Offline copies can exchange immutable objects and retain competing contributions. Native client acceptance and live sync-client trials remain pending; no automatic hooks are installed.
+> **Source alpha · 0.2.0a1.** A local engine, CLI and stdio MCP server with a causal, portable vault format. Offline copies can exchange immutable objects and retain competing contributions. A bounded native Codex CLI and live Syncthing trial is reported below; other client acceptance remains open. No automatic hooks are installed.
 
 A new session should not mean explaining the same decision again. Save what matters, correct it when it changes, and inspect the history behind the current answer.
 
@@ -74,7 +74,7 @@ Claude Code · Codex · Cursor · Antigravity · other MCP/CLI clients
            Markdown · sources · revisions · explicit scopes
 ```
 
-Generated configurations have been exercised with an SDK stdio client. That establishes a server launch and protocol exchange, not that a particular IDE loaded the server or followed its skill. Explicit save/recall and automatic lifecycle integration are separate capabilities. The native four-client matrix remains open.
+Generated configurations have been exercised with an SDK stdio client. A private synthetic run also exercised actual Codex CLI sessions and live Syncthing transport across Windows, macOS and Linux; see the [bounded acceptance report](docs/LIVE-ACCEPTANCE.md). Claude Code native attempts were blocked before tool use, and Cursor/Antigravity native acceptance remains open. Explicit save/recall does not establish automatic lifecycle integration or desktop GUI behavior.
 
 ## Where this is going
 

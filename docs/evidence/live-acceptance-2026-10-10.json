@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "run_date": "2026-10-10",
+  "implementation_commit": "44e45e2bf11cdbae23c0d1e82f689393f80d1769",
+  "source_type": "Project-maintained report of private synthetic observations; not a public CI replay.",
+  "raw_evidence": "Native transcripts, device configurations and host paths remain private.",
+  "native_clients": [
+    {
+      "platform": "Windows",
+      "client": "Codex CLI",
+      "version": "0.160.1",
+      "status": "passed"
+    },
+    {
+      "platform": "macOS",
+      "client": "Codex CLI",
+      "version": "0.162.0",
+      "status": "passed"
+    },
+    {
+      "platform": "Linux",
+      "client": "Codex CLI",
+      "version": "0.160.1",
+      "status": "passed"
+    },
+    {
+      "platform": "Windows",
+      "client": "Claude Code",
+      "version": "2.1.289",
+      "status": "blocked",
+      "reason": "subscription_quota",
+      "memory_tool_calls": 0
+    },
+    {
+      "platform": "macOS",
+      "client": "Claude Code",
+      "version": "2.1.287",
+      "status": "blocked",
+      "reason": "remote_session_authentication",
+      "memory_tool_calls": 0
+    },
+    {
+      "platform": "Linux",
+      "client": "Claude Code",
+      "version": "2.1.291",
+      "status": "blocked",
+      "reason": "subscription_quota",
+      "memory_tool_calls": 0
+    }
+  ],
+  "requested_codex_profile": {
+    "model": "gpt-6.1-sol",
+    "effort": "high"
+  },
+  "observed_codex_profile": null,
+  "transport": {
+    "product": "Syncthing",
+    "version": "2.1.6",
+    "mode": "separate test instances, explicit TCP peers",
+    "initialization": "One Windows seed; remote copies received it automatically.",
+    "manual_vault_copy_or_import": false
+  },
+  "passed_cases": [
+    "native_write_read_fresh_session_cross_host",
+    "native_correction_history_exact_retry",
+    "native_three_heads_and_context_warning",
+    "native_revoked_source_history_and_dependent_denial",
+    "independent_offline_project_contributions",
+    "exact_two_and_three_peer_immutable_byte_unions",
+    "stale_two_head_resolution_rejected_without_mutation",
+    "resolution_consumes_three_heads_and_exact_retry_is_idempotent",
+    "tombstone_covers_offline_descendant",
+    "revoke_defeats_stale_grant",
+    "known_partial_transfer_refused_and_automatically_recovers",
+    "graceful_sync_process_restart_delivers_offline_write",
+    "three_host_index_deletion_and_rebuild_preserves_state",
+    "test_process_and_listener_shutdown_observed"
+  ],
+  "remaining": [
+    "Successful Claude Code tool/session acceptance",
+    "Native Cursor/Antigravity and desktop GUI acceptance",
+    "Automatic lifecycle recall",
+    "Live personal vault migration",
+    "Exhaustive crash/power-loss or filesystem testing"
+  ],
+  "expected_diagnostic": "After grant revocation, retained dependent record produces source_scope; no claim that post-revoke doctor is clean.",
+  "receipt_sha256": {
+    "native_cross_host": "de123c4dae8f3d86ab82aa9a3e6ffc13b70c16c6ea2b0ee97e9ed368b717d504",
+    "native_conflict_policy": "6ef2885e331f1d5373db811f197c13c858b0e39b3aaa3b9a17c84350be3a1de8",
+    "offline_union": "eda658eee0e2fba655305d4e39f66a7380b625f395a99fb288a749ead11bbad0",
+    "exact_head_resolution": "86949abdb58245a6e4ca7efa4e6359f341435d48e558549c20441e1f9b108722",
+    "partial_transfer": "ac1d23e2efac0755b8b21843b906dfffcbe8659f9f3ffb8570dd7f6b8eb4cc90",
+    "graceful_sync_restart": "cca70a624b5302070b9bfeddcd572dfcb608dacb7a568dcd3a2061959e0e2fee",
+    "reindex": "8ec6db0ffe67600c63ec9d0be129984da50d398acf2c592be5e6490e87edddf8",
+    "cleanup": "63f56005d33dbd4f64a1b7b4ab61be5a5ea03b0270930fe18d1d4aceb886c6cc",
+    "mac_copied_venv_failure": "d512d97bcc7f43ff57f356d94e30472cd253a135cd4d18a1d1a0a55962d73e23",
+    "mac_standard_venv_success": "86926f89ff731f8f96c1ae71d89c0398b4d37bb56555f200028d7b586fe57255"
+  }
+}

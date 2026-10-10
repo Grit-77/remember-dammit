@@ -1,6 +1,6 @@
 # Publication facts
 
-Implementation reviewed: `f83357b` — source alpha **0.2.0a1**, 2026-10-10, implemented from base `093622ff13f18715bc9fdf17df1b5b1c7903aba7`. The receipts below identify source and reproducible checks; consult CI on the actual publication commit for platform results. No full-suite count, cross-platform pass or native-client acceptance result is asserted here. Run commands from an installed checkout: `python -m pip install -e ".[mcp]"`.
+Implementation reviewed: `44e45e2` — source alpha **0.2.0a1**, 2026-10-10, implemented from base `093622ff13f18715bc9fdf17df1b5b1c7903aba7`. The receipts below identify source and reproducible checks; consult CI on the actual publication commit for platform results. Public CI and private native observations are separate; the dated private run is attributed below. Run commands from an installed checkout: `python -m pip install -e ".[mcp]"`.
 
 Historical publication context: 0.1.0a4 was reviewed at `9cc5b7e`; initial core at `c8e4b2c`, Markdown import at `e429bb3`/`2aacc9e`, workspace setup at `1a58324`, and diagnostics/shadow assessment at `e3830bc`. Those are historical receipts, not evidence that the new format's platform matrix has passed.
 
@@ -67,3 +67,25 @@ Historical publication context: 0.1.0a4 was reviewed at `9cc5b7e`; initial core 
 - Updated the 0.2.0a1 candidate from base `093622f`: replaced current single-chain/head-checkpoint and sibling-lock claims with causal objects, immutable witnesses and OS-local state; retained v1 as an explicitly labeled legacy path.
 - Replaced the unimplemented offline-merge/migration labels with their actual explicit APIs; retained background/live-sync, native harness and cross-platform acceptance limits. No current suite count or live migration result was introduced.
 - Added same-owner full-bundle scope, exact-head resolution/retraction, partial-policy refusal, original-plan retry, unknown-branch omission and explicit rollback boundaries with source/test receipts.
+
+## Private native and live-transport observations
+
+The project records the following private run on 2026-10-10 against implementation
+`44e45e2bf11cdbae23c0d1e82f689393f80d1769`. These are dated operator observations,
+not a public CI reproduction or a claim that every environment behaves alike.
+Raw session/transport data stays private. See [LIVE-ACCEPTANCE.md](docs/LIVE-ACCEPTANCE.md)
+and its sanitized evidence index for scope and receipt hashes.
+
+| Reported observation | Receipt type / date | Limits |
+| --- | --- | --- |
+| Native Codex CLI save/recall across Windows, macOS and Linux, fresh sessions without supplied answers | Native JSONL tool calls/results, independent vault readbacks, session/receipt verifier; 2026-10-10 | Exact observed client versions are listed in the report; effective model/effort was not emitted. No desktop GUI or lifecycle claim. |
+| Native correction/history/exact retry and revoked-source/conflict visibility | Native scoped MCP transcripts plus immutable snapshot comparison; 2026-10-10 | Selected Windows cases, not a universal tool authorization claim. |
+| Claude Code attempts did not execute memory tools | Native error receipts; 2026-10-10 | Windows/Linux subscription quota; macOS remote-session authentication. Native Claude acceptance remains blocked, not passed. |
+| Live Syncthing 2.1.6 preserved offline contributions, policy and known-incomplete recovery | Private three-host transport receipts and exact immutable inventory comparison; 2026-10-10 | Isolated synthetic vault; no live memory migration or general synchronization certification. |
+| Graceful Linux sync restart and three-host index rebuild preserved memory | Private process/port checks, offline CLI write and peer absence/readbacks, deleted/rebuilt index receipts; 2026-10-10 | Dedicated test process only; no physical machine outage or forced crash claim. |
+| Test sync processes were stopped after acceptance | Private shutdown acknowledgements and subsequent process/listener observations; 2026-10-10 | Existing live process presence was checked; no claim that unrelated concurrent client metadata stayed byte-identical. |
+| Standard POSIX venv creation worked where copied interpreter creation failed | Actual macOS Python 3.12.15 command output: copied interpreter lacked encodings; standard venv imported json/ssl successfully; 2026-10-10 | Selected relocatable Python installation. AGENT-SETUP now uses `python3 -m venv .venv`. |
+
+Publication adjustment: replaced the previous blanket untested-native/live-sync
+label with these bounded dated observations; retained every blocked/unrun client
+boundary and corrected the observed POSIX installation command.
