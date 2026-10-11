@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "captured_on": "2026-10-11",
+  "implementation_commit": "e44edf68ebc0a04eba0ab03a39aefe3aa8406bc0",
+  "command": "python examples/demo.py --vault <new-directory>",
+  "description": "Real local engine run; selected observed values captured for reproducibility. No model or native client was invoked.",
+  "script_sha256": "824e38a3536bb2fa64123f9ae87a3b21329d4e24af7b09949f96413bb7d90194",
+  "saved_decision": "Use SendGrid for Atlas email.",
+  "current_decision": "Use Postmark for Atlas email.",
+  "query": "SendGrid email",
+  "history_states": [
+    "superseded",
+    "active"
+  ],
+  "other_project_records": 0,
+  "context": {
+    "schema_version": 1,
+    "vault_id": "da14452d-8198-440c-ab72-6c1ba42a2c65",
+    "snapshot": "00797f012da5928960c776d7e0ee773b8108603385b353cb1ec2ea6ff8643e8a",
+    "query": "SendGrid email",
+    "provider": "off",
+    "status": "ok",
+    "matched_count": 2,
+    "records": [
+      {
+        "id": "1977d143b63f41b89313dd26eed3a84a",
+        "revision": "d126ffaba854ac220c20c83164e3ab284f5308f0a1fbc2039e591aab82bbda66",
+        "title": "Email provider",
+        "body": "Use Postmark for Atlas email.",
+        "scope": "project:atlas",
+        "kind": "note",
+        "state": "active",
+        "context_role": "memory",
+        "evidence": "user-statement",
+        "score": 2.38e-06,
+        "reason": "lexical passage match; supersession terms considered",
+        "citation": {
+          "id": "1977d143b63f41b89313dd26eed3a84a",
+          "revision": "d126ffaba854ac220c20c83164e3ab284f5308f0a1fbc2039e591aab82bbda66",
+          "path": ".remember/revisions/d126ffaba854ac220c20c83164e3ab284f5308f0a1fbc2039e591aab82bbda66.md",
+          "start": 0,
+          "end": 29
+        },
+        "sources": [
+          {
+            "id": "85c8520838574e0aae4e693f3b28bb12",
+            "revision": "37177be5e6a163a4d894604b68565c41e56e548e5492beba2c4c6c1b50045671",
+            "title": "Owner correction",
+            "path": ".remember/revisions/37177be5e6a163a4d894604b68565c41e56e548e5492beba2c4c6c1b50045671.md"
+          }
+        ],
+        "conflicts_with": []
+      },
+      {
+        "id": "85c8520838574e0aae4e693f3b28bb12",
+        "revision": "37177be5e6a163a4d894604b68565c41e56e548e5492beba2c4c6c1b50045671",
+        "title": "Owner correction",
+        "body": "Use Postmark for Atlas email.",
+        "scope": "project:atlas",
+        "kind": "source",
+        "state": "active",
+        "context_role": "reference_source",
+        "evidence": "user-statement",
+        "score": 1.19e-06,
+        "reason": "lexical passage match",
+        "citation": {
+          "id": "85c8520838574e0aae4e693f3b28bb12",
+          "revision": "37177be5e6a163a4d894604b68565c41e56e548e5492beba2c4c6c1b50045671",
+          "path": ".remember/revisions/37177be5e6a163a4d894604b68565c41e56e548e5492beba2c4c6c1b50045671.md",
+          "start": 0,
+          "end": 29
+        },
+        "sources": [],
+        "conflicts_with": []
+      }
+    ],
+    "warnings": [
+      "historical_only_sources_excluded_use_history_to_inspect"
+    ],
+    "omitted": {
+      "limit": 0,
+      "budget": 0
+    },
+    "budget_bytes": 8000
+  }
+}

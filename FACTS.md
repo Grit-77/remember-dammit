@@ -89,3 +89,24 @@ and its sanitized evidence index for scope and receipt hashes.
 Publication adjustment: replaced the previous blanket untested-native/live-sync
 label with these bounded dated observations; retained every blocked/unrun client
 boundary and corrected the observed POSIX installation command.
+
+## First-use presentation — 2026-10-11
+
+The first-use copy is grounded in the unchanged engine at `e44edf6`.
+“Stop explaining your project from scratch” describes the intended use; explicit
+capture/recall and client acceptance limits are stated in the same README.
+
+| Presentation | Receipt | Limits |
+| --- | --- | --- |
+| Save SendGrid, correct to Postmark, reopen and recall using “SendGrid email” | `examples/demo.py`; captured selected values and context in `docs/evidence/core-demo-2026-10-11.json`; `tests/test_demo.py` | Captured JSON records actual local engine results. The generated hero is brand artwork, not a native AI screenshot, video or perfect-recall benchmark. |
+| First fact, verified readback, interview/task and later optional advisor choice | `docs/AGENT-SETUP.md`; packaged `src/remember_dammit/templates/remember-dammit/SKILL.md` | Instructional flow, not a claim that every model follows it. The optional choice is still asked; no provider is enabled by default. |
+| Generated README hero | `docs/assets/remember-dammit-hero.jpg`; provenance and SHA256 in `docs/assets/README.md`; private Flow output receipt dated 2026-10-11 | Nano Banana 2.1 output, visually inspected. Brand illustration, not a captured application or test result. |
+| First-run feedback and launch copy | `.github/ISSUE_TEMPLATE/first-run.yml`; `docs/LAUNCH.md` | Templates/drafts only. No users, retention, publication reach or star growth is claimed. |
+
+Presentation change: lead with the user problem and one install prompt, add a
+reproducible real-engine demo, move optional integrations and architecture below
+the first-use path, preserve alpha/native/synchronization limits, and provide
+an opt-in feedback route. Launch text is prepared for the owner to publish;
+no external messages were sent by this work.
+
+Owner visual preference, 2026-10-11: README promotional artwork is generated in Flow rather than drawn in SVG/canvas/Python. The unshipped drawn draft was removed and replaced with generated artwork; captured demo values remain plain evidence.

@@ -1,0 +1,72 @@
+name: First-run feedback
+description: Tell us where setup stopped or what happened on your first memory attempt.
+title: "[First run]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A short report is enough, whether the attempt worked or stopped early.
+        This issue is public. Omit secrets, credentials, private vault content,
+        and identifying paths. Share only a sanitized error excerpt if useful.
+  - type: input
+    id: client
+    attributes:
+      label: Client
+      placeholder: "Codex CLI (version if known), Claude Code, Cursor, Antigravity, or CLI only"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: furthest-step
+    attributes:
+      label: Furthest step reached
+      options:
+        - Read the guide; did not begin installation
+        - Installed the package
+        - Initialized a vault
+        - Applied workspace setup
+        - Client connected and approved memory tools
+        - Saved a first note or task
+        - Read back or recalled it in the same session
+        - Explicitly recalled it in a fresh session
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: What did you expect, and what happened?
+      description: Include the step that was confusing or blocked you. A successful attempt is useful feedback too.
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: dropdown
+    id: return-use
+    attributes:
+      label: Have you used memory again for an actual task? (optional)
+      options:
+        - Yes, in a later session
+        - Tried in a later session, but was blocked
+        - No; this was my first attempt
+        - No; decided not to continue
+    validations:
+      required: false
+  - type: textarea
+    id: sanitized-error
+    attributes:
+      label: Sanitized error excerpt (optional)
+      description: Remove secrets, private note text, and identifying paths. Do not attach your vault or a full session transcript.
+      render: text
+    validations:
+      required: false

@@ -6,10 +6,11 @@ you want to use memory:
 > Install https://github.com/Grit-77/remember-dammit for this workspace. Use an
 > existing Python 3.11+ and a dedicated virtual environment. Ask me which vault
 > and memory scope to use, preview the workspace setup, then apply the requested
-> configuration. Afterward, ask whether I want no optional advisor, Jev, or Laya,
-> explain what is available, and help me with the next setup steps. Ask a few
-> short questions to get to know me, save my selected answers as source notes,
-> create one task from my goal, and actually read the notes and task back.
+> configuration. Help me save one useful fact and actually read it back. Then
+> ask a few short questions to get to know me, save my selected answers as source
+> notes, create one task from my goal, and read it back. After this first-use
+> check, ask whether I want no optional advisor, Jev, or Laya, explain what is
+> available, and help me with the next setup steps.
 
 The agent should carry out the installation and explain the result. This helper
 does not download Python, create a virtual environment, install packages, or
