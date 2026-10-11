@@ -145,6 +145,15 @@ def _admitted(vault, baseline, project, personal, audience, remote):
     return items
 
 
+def _deadline_clock():
+    # Deadlines use a high-resolution clock so the send guard agrees with the watchdog
+    # timer's wakeup. On Windows CPython <= 3.12 time.monotonic() is
+    # GetTickCount64 (15.625 ms ticks) and can still read "before the deadline"
+    # after threading.Timer is due, which admitted an authorized POST past the
+    # deadline. perf_counter is monotonic, system-wide and high resolution.
+    return time.perf_counter()
+
+
 class _ProviderError(Exception):
     def __init__(self, reason):
         self.reason = reason
@@ -162,7 +171,7 @@ def _post(config, payload, key, timeout):
     # Every request owns exactly one explicit connection. Cancellation must not
     # permit HTTPConnection.send() to reopen a socket and transmit a late key.
     connection.auto_open = False
-    deadline = time.monotonic() + timeout
+    deadline = _deadline_clock() + timeout
     expired = threading.Event()
     active_socket = []
 
@@ -170,7 +179,7 @@ def _post(config, payload, key, timeout):
     def send_before_deadline(data):
         # Timer callbacks can be scheduled late. Check at each actual header or
         # body send, including a request resumed after its deadline has passed.
-        if expired.is_set() or time.monotonic() >= deadline:
+        if expired.is_set() or _deadline_clock() >= deadline:
             expired.set()
             raise _ProviderError('timeout')
         return send(data)
@@ -208,7 +217,7 @@ def _post(config, payload, key, timeout):
                 connected.set()
         connector = threading.Thread(target=connect, daemon=True)
         connector.start()
-        if not connected.wait(max(0, deadline - time.monotonic())):
+        if not connected.wait(max(0, deadline - _deadline_clock())):
             expired.set()
             connection.close()
             raise _ProviderError('timeout')
@@ -232,7 +241,7 @@ def _post(config, payload, key, timeout):
         # read1() closes HTTPResponse as soon as its declared body is complete.
         # Do not touch its released socket again while looking for another EOF.
         while not response.isclosed():
-            remaining = deadline - time.monotonic()
+            remaining = deadline - _deadline_clock()
             if remaining <= 0 or expired.is_set():
                 raise _ProviderError('timeout')
             active_socket[0].settimeout(remaining)
@@ -360,12 +369,12 @@ def assess(vault, query, *, project=None, personal=False, audience='private',
             if (not isinstance(key, str) or len(key.encode('utf-8')) > 4096
                     or any(ord(c) < 33 or ord(c) > 126 for c in key)):
                 return degraded('invalid_credentials')
-        deadline = time.monotonic() + MAX_BATCH_SECONDS
+        deadline = _deadline_clock() + MAX_BATCH_SECONDS
         for item, payload in requests:
             current = _admitted(vault, baseline, project, personal, audience, remote)
             if not any(r['id'] == item['id'] and r['revision'] == item['revision'] for r in current):
                 return changed()
-            remaining = deadline - time.monotonic()
+            remaining = deadline - _deadline_clock()
             if remaining <= 0:
                 return degraded('batch_timeout')
             try:

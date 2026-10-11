@@ -1,5 +1,6 @@
 """Synthetic protocol fixtures, never claims of live provider compatibility."""
 
+import contextlib
 import copy
 import importlib.util
 import http.client
@@ -9,6 +10,7 @@ import socket
 import tempfile
 import threading
 import time
+import types
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -336,7 +338,7 @@ class AdvisorTests(unittest.TestCase):
         self.assertEqual(result['assessments'], [])
         self.assertEqual(self.requests, [], 'timeout must prevent implicit reconnect and all late POSTs')
 
-    def test_late_watchdog_cannot_send_authorization_after_absolute_deadline(self):
+    def late_watchdog_scenario(self, *extra_patches):
         received = threading.Event()
         config = dict(self.server(mutate=received.set), timeout_seconds=0.05,
                       api_key_env='SYNTHETIC_LAYA_TEST_KEY')
@@ -358,16 +360,33 @@ class AdvisorTests(unittest.TestCase):
             return original_request(connection, *args, **kwargs)
 
         try:
-            with patch.dict(os.environ, {'SYNTHETIC_LAYA_TEST_KEY': 'synthetic-test-token'}), \
-                 patch('remember_dammit.advisors.threading.Timer', new=delayed_timer), \
-                 patch('http.client.HTTPConnection.request', new=request_after_deadline):
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(patch.dict(os.environ, {'SYNTHETIC_LAYA_TEST_KEY': 'synthetic-test-token'}))
+                stack.enter_context(patch('remember_dammit.advisors.threading.Timer', new=delayed_timer))
+                stack.enter_context(patch('http.client.HTTPConnection.request', new=request_after_deadline))
+                for extra in extra_patches:
+                    stack.enter_context(extra)
                 result = self.assess(config=config)
             received.wait(0.1)
-            self.assertEqual(result['advisor']['reason'], 'timeout')
+            self.assertEqual(result['advisor'].get('reason'), 'timeout', result['advisor'])
             self.assertEqual(result['assessments'], [])
             self.assertEqual(self.requests, [], 'a late watchdog must not permit an expired authorized POST')
         finally:
             release_watchdog.set()
+
+    def test_late_watchdog_cannot_send_authorization_after_absolute_deadline(self):
+        self.late_watchdog_scenario()
+
+    def test_coarse_monotonic_clock_cannot_admit_send_after_watchdog_is_due(self):
+        # Windows CPython <= 3.12 backs time.monotonic() with GetTickCount64
+        # (15.625 ms ticks), so it can still read "before the deadline" after
+        # the watchdog timer is due. Model the worst case, a tick that has not
+        # advanced at all: the send guard must not depend on that clock.
+        frozen = time.monotonic()
+        coarse_time = types.SimpleNamespace(**{name: getattr(time, name) for name in dir(time)
+                                               if not name.startswith('__')})
+        coarse_time.monotonic = lambda: frozen
+        self.late_watchdog_scenario(patch.object(self.api, 'time', coarse_time))
 
     def test_complete_content_length_and_chunked_responses_are_valid_advice(self):
         for framing in ('length', 'length-keepalive', 'length-close', 'chunked', 'eof'):
