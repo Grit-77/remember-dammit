@@ -8,6 +8,8 @@ keep the correction and the history behind it.
 
 **[Get started with your agent →](#get-started)**
 
+[Contributing](CONTRIBUTING.md)
+
 Source alpha · Python 3.11+ · [Apache-2.0](LICENSE)
 
 ![Remember, Dammit. — generated brand artwork.](docs/assets/remember-dammit-hero.jpg)
