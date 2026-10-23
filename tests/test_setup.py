@@ -220,8 +220,9 @@ class SetupTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX virtual environments use interpreter symlinks")
     def test_interpreter_symlink_preserves_lexical_virtualenv_command(self):
-        executable = self.root / "venv-python"
+        executable = Path(sys.executable).parent / f"venv-python-{self.root.name}"
         executable.symlink_to(Path(sys.executable))
+        self.addCleanup(executable.unlink, missing_ok=True)
         self.setup(python_executable=executable, dry_run=False)
         server = json.loads((self.workspace / ".mcp.json").read_bytes())["mcpServers"]["remember-dammit"]
         self.assertEqual(server["command"], str(executable))
