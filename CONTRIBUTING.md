@@ -39,7 +39,7 @@ its limits.
 Run the current complete test suite from the repository root:
 
 ```sh
-python -m unittest discover -s tests -v
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
 Also inspect the diff and run any focused check that exercises the changed
